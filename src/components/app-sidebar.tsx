@@ -27,13 +27,11 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import {
   Person24Regular,
-  Album24Regular,
   Clock24Regular,
   Heart24Regular,
   Home24Regular,
   Home24Filled,
   Clock24Filled,
-  Album24Filled,
   Heart24Filled,
   FluentIcon,
   Cloud24Regular,
@@ -42,6 +40,10 @@ import {
   Add24Filled,
   Settings24Regular,
   SignOut24Regular,
+  ArrowDownload24Regular,
+  ArrowDownload24Filled,
+  Folder24Regular,
+  Folder24Filled,
 } from "@fluentui/react-icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -70,10 +72,16 @@ const libraryItems = [
     activeIcon: Clock24Filled,
   },
   {
-    title: "专辑",
-    url: "/library/album",
-    icon: Album24Regular,
-    activeIcon: Album24Filled,
+    title: "下载管理",
+    url: "/library/download",
+    icon: ArrowDownload24Regular,
+    activeIcon: ArrowDownload24Filled,
+  },
+  {
+    title: "本地音乐",
+    url: "/library/local",
+    icon: Folder24Regular,
+    activeIcon: Folder24Filled,
   },
   {
     title: "网盘",

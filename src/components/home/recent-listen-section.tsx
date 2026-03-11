@@ -49,6 +49,9 @@ export function RecentListenSection({
               e.stopPropagation();
               if (res?.resourceId) playList(res?.resourceId, res.resourceType);
             },
+
+            resourceType: res.resourceType,
+            id: res.resourceId,
           };
         }),
       );

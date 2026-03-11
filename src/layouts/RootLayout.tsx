@@ -8,6 +8,7 @@ import { AuthConfig } from "@/components/providers/auth-provider";
 import { Titlebar } from "@/components/titlebar/titlebar";
 import { TitlebarProvider } from "@/contexts/titlebar-context";
 import { cn } from "@/lib/utils";
+import { GlobalContextMenu } from "@/components/context-menu/global-context-menu";
 
 export default function RootLayout() {
   return (
@@ -35,6 +36,7 @@ export default function RootLayout() {
                 id="main-scroll-container"
                 className="flex-1 w-full h-full overflow-y-auto"
                 onDragStart={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 <div className="W-full flex flex-col">
                   <Outlet />
@@ -45,6 +47,7 @@ export default function RootLayout() {
         </SidebarProvider>
       </TitlebarProvider>
       <Toaster />
+      <GlobalContextMenu />
       <div className="w-full z-40">
         <PlayerBar />
       </div>

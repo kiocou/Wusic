@@ -25,6 +25,7 @@ import { sfBrandItunesNote } from "@bradleyhodges/sfsymbols";
 import { YeeButton } from "../yee-button";
 import { PlayerBarVolumePopover } from "./player-bar-volume-popover";
 import { PlayerBarSlider } from "./playerbar-slider";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function PlayerBar() {
   return (
@@ -187,6 +188,9 @@ function CenterButtonRegion() {
 }
 
 function RightButtonRegion() {
+  const openMenu = useContextMenuStore((s) => s.openMenu);
+  const currentSong = usePlayerStore((s) => s.currentSong);
+
   return (
     <div className="flex items-center justify-end gap-4 shrink-0 pr-4">
       <MusicLevelPopover />
@@ -197,7 +201,10 @@ function RightButtonRegion() {
 
       <YeeButton
         variant="ghost"
-        onClick={() => {}}
+        onClick={(e) => {
+          e.preventDefault();
+          openMenu(e.clientX, e.clientY, "song", currentSong);
+        }}
         icon={<MoreHorizontal24Filled className="size-6" />}
       />
     </div>

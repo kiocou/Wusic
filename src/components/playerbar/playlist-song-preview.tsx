@@ -13,6 +13,7 @@ import { memo } from "react";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { Link } from "react-router-dom";
 import { YeeButton } from "../yee-button";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export const PlaylistSongPreview = memo(
   function PlaylistSongPreview({
@@ -40,6 +41,7 @@ export const PlaylistSongPreview = memo(
     const { playSong, removeFromPlaylist, togglePlay } = usePlayerStore();
     const isPlayerPlaying = usePlayerStore((s) => s.isPlaying);
     const LikeIcon = isLike ? LIKE_ICON.like : LIKE_ICON.unlike;
+    const openMenu = useContextMenuStore((s) => s.openMenu);
 
     async function handleLike(e: React.MouseEvent) {
       e.preventDefault();
@@ -90,6 +92,10 @@ export const PlaylistSongPreview = memo(
         className={cn(
           "flex justify-between items-center rounded-md transition-all duration-200 ease-in-out group",
         )}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          openMenu(e.clientX, e.clientY, "song", song);
+        }}
       >
         <div className="flex items-center gap-4 w-3/4 ">
           <div
@@ -109,7 +115,7 @@ export const PlaylistSongPreview = memo(
 
             <PlayButton
               className={cn(
-                "transition-opacity duration-200 ease-out text-foreground size-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+                " transition-opacity duration-200 ease-out text-white size-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
                 !isPlaying && "opacity-0  group-hover:opacity-100",
               )}
             />

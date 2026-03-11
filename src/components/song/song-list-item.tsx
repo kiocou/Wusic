@@ -4,6 +4,8 @@ import { MoreHorizontal24Regular, Play24Filled } from "@fluentui/react-icons";
 import { Button } from "../ui/button";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { Link } from "react-router-dom";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
+import React from "react";
 
 export function SongListItem({
   song,
@@ -16,11 +18,17 @@ export function SongListItem({
   showCover: boolean;
   showAlbum?: boolean;
 }) {
+  const openMenu = useContextMenuStore((s) => s.openMenu);
   const playSong = usePlayerStore((s) => s.playSong);
 
   const gridTemplate = showAlbum
     ? "grid-cols-[1fr_1fr_1fr_52px_26px]"
     : "grid-cols-[1fr_1fr_52px_26px]";
+
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    openMenu(e.clientX, e.clientY, "song", song);
+  }
 
   return (
     <div
@@ -31,6 +39,7 @@ export function SongListItem({
       )}
       onDoubleClick={() => playSong(song)}
       onDragStart={(e) => e.preventDefault()}
+      onContextMenu={handleContextMenu}
     >
       <div className={`grid ${gridTemplate} items-center px-4 py-3 group`}>
         <div className="flex gap-4 items-center ">
@@ -95,7 +104,12 @@ export function SongListItem({
           {formatDuration((song.dt || 1) / 1000)}
         </span>
         <span>
-          <Button variant="ghost" size="icon" className="cursor-pointer">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="cursor-pointer"
+            onClick={handleContextMenu}
+          >
             <MoreHorizontal24Regular className="size-4" />
           </Button>
         </span>

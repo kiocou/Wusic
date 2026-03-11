@@ -6,9 +6,11 @@ import { Play28Filled } from "@fluentui/react-icons";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { Link } from "react-router-dom";
 import { GetThumbnail } from "@/lib/utils";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function PlaylistCard({ resource }: { resource: Resource | null }) {
   const { playList } = usePlayerStore();
+  const openMenu = useContextMenuStore((s) => s.openMenu);
 
   function handlePlay() {
     if (resource?.resourceId) {
@@ -38,7 +40,13 @@ export function PlaylistCard({ resource }: { resource: Resource | null }) {
   const cover = uiElement?.image?.imageUrl || "";
 
   return (
-    <div className="w-32 flex flex-col gap-4">
+    <div
+      className="w-32 flex flex-col gap-4"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY, "playlist", resource);
+      }}
+    >
       <div className="w-full h-32 rounded-lg drop-shadow-md overflow-hidden group border">
         <div className="w-full h-full relative cursor-pointer group">
           <Link to={`/detail/playlist?id=${resource.resourceId}`}>

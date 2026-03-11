@@ -27,6 +27,7 @@ export interface PlaylistSlice {
   addToPlaylist: (song: Song) => void;
   clearPlaylist: () => void;
   removeFromPlaylist: (song: Song) => void;
+  isInPlaylist: (song: Song) => boolean;
 }
 
 // 播放控制切片类型定义

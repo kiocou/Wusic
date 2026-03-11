@@ -8,12 +8,13 @@ import ArtistDetailPage from "./pages/detail/ArtistDetailPage";
 import PlaylistDetailPage from "./pages/detail/PlaylistDetailPage";
 import RecentPage from "./pages/library/RecentPage";
 import CloudPage from "./pages/library/CloudPage";
-import AlbumPage from "./pages/library/AlbumPage";
 import SettingPage from "./pages/SettingPage";
 import ProfilePage from "./pages/ProfilePage";
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { initMediaSession } from "./lib/store/mediaSessionSync";
+import DownloadPage from "./pages/library/DownloadPage";
+import LocalPage from "./pages/library/LocalPage";
 
 const router = createBrowserRouter([
   {
@@ -53,8 +54,12 @@ const router = createBrowserRouter([
         element: <CloudPage />,
       },
       {
-        path: "library/album",
-        element: <AlbumPage />,
+        path: "library/download",
+        element: <DownloadPage />,
+      },
+      {
+        path: "library/local",
+        element: <LocalPage />,
       },
       {
         path: "setting",

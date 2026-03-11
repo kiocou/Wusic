@@ -63,7 +63,7 @@ function ComboboxInput({
   return (
     <InputGroup
       className={cn(
-        "w-auto bg-card focus-within:ring-0! focus-within:border-border!",
+        "w-auto bg-card focus-within:ring-0! focus-within:border-border",
         className,
       )}
     >
@@ -72,6 +72,7 @@ function ComboboxInput({
         {...props}
         readOnly
         className="cursor-default caret-transparent select-none"
+        onMouseDown={(e) => e.preventDefault()}
       />
       <InputGroupAddon align="inline-end">
         {showTrigger && (

@@ -4,12 +4,20 @@ import { usePlayerStore } from "@/lib/store/playerStore";
 import { Link } from "react-router-dom";
 import { YeeButton } from "../yee-button";
 import { GetThumbnail } from "@/lib/utils";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function PlaylistItem({ playlist }: { playlist: Playlist }) {
   const playList = usePlayerStore((s) => s.playList);
+  const openMenu = useContextMenuStore((s) => s.openMenu);
 
   return (
-    <div className="flex gap-4">
+    <div
+      className="flex gap-4"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY, "playlist", playlist);
+      }}
+    >
       <div className="size-24 relative rounded-md overflow-hidden drop-shadow-md cursor-pointer group">
         <Link to={`/detail/playlist?id=${playlist.id}`}>
           <img

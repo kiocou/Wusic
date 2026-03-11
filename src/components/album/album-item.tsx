@@ -3,6 +3,7 @@ import { GetThumbnail, cn, formateDate } from "@/lib/utils";
 import { Play24Filled } from "@fluentui/react-icons";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { Link } from "react-router-dom";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function AlbumItem({
   album,
@@ -14,9 +15,16 @@ export function AlbumItem({
   showDate: boolean;
 }) {
   const playList = usePlayerStore((s) => s.playList);
+  const openMenu = useContextMenuStore((s) => s.openMenu);
 
   return (
-    <div className="w-32 flex flex-col gap-4">
+    <div
+      className="w-32 flex flex-col gap-4"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY, "album", album);
+      }}
+    >
       <div className="size-32 rounded-md overflow-hidden relative drop-shadow-md group cursor-pointer">
         <Link to={`/detail/album?id=${album.id}`}>
           <img

@@ -1,56 +1,10 @@
-import { Song } from "@/lib/types";
-import { useMemo } from "react";
 import { PlaylistSongPreview } from "../playerbar/playlist-song-preview";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { useUserStore } from "@/lib/store/userStore";
-import { List } from "react-window";
 import { cn } from "@/lib/utils";
 import { useScrollOverflowMask } from "@/hooks/use-scroll-overflow-mask";
-
-interface RowProps {
-  playlist: Song[];
-  currentSong: Song | null;
-  likeListSet: Set<number>;
-  setOpen: (open: boolean) => void;
-}
-
-const RowComponent = ({
-  index,
-  style,
-  ariaAttributes,
-  playlist,
-  currentSong,
-  likeListSet,
-  setOpen,
-}: {
-  index: number;
-  style: React.CSSProperties;
-  ariaAttributes: {
-    "aria-posinset": number;
-    "aria-setsize": number;
-    role: "listitem";
-  };
-} & RowProps) => {
-  const song = playlist[index];
-
-  if (!song) return null;
-
-  return (
-    <div style={style} {...ariaAttributes}>
-      <PlaylistSongPreview
-        setOpen={setOpen}
-        song={song}
-        isPlaying={song.id === currentSong?.id}
-        isLike={likeListSet.has(song.id)}
-        titleStyle="text-white/80 font-semibold mix-blend-plus-lighter"
-        artistStyle="text-white/60 hover:text-white/40 mix-blend-plus-lighter"
-        coverStyle="drop-shadow-md"
-        textStyle="text-white/60 mix-blend-plus-lighter"
-        buttonStyle="text-white hover:bg-black/10"
-      />
-    </div>
-  );
-};
+import { Virtuoso } from "react-virtuoso";
+import { useMemo } from "react";
 
 export function LyricSheetSonglist({
   className,
@@ -62,17 +16,14 @@ export function LyricSheetSonglist({
   const { playlist, currentSong } = usePlayerStore();
   const { likeListSet } = useUserStore();
 
-  const itemData = useMemo(
-    () => ({
-      playlist,
-      currentSong,
-      likeListSet,
-      setOpen,
-    }),
-    [playlist, currentSong, likeListSet, setOpen],
-  );
-
   const { handleScroll, maskImage } = useScrollOverflowMask();
+
+  const initialIndex = useMemo(() => {
+    const nowIndex = currentSong
+      ? playlist.findIndex((s) => s.id === currentSong.id)
+      : 0;
+    if (nowIndex !== 0) return nowIndex - 1;
+  }, [currentSong, playlist]);
 
   return (
     <div className={cn("h-full w-full flex justify-center", className)}>
@@ -91,13 +42,26 @@ export function LyricSheetSonglist({
             maskImage: maskImage,
           }}
         >
-          <List
+          <Virtuoso
             className="no-scrollbar"
-            rowComponent={RowComponent}
-            rowCount={playlist.length}
-            rowHeight={72}
-            rowProps={itemData}
             onScroll={handleScroll}
+            initialTopMostItemIndex={initialIndex}
+            data={playlist}
+            itemContent={(_, song) => (
+              <div className="px-4 py-4">
+                <PlaylistSongPreview
+                  song={song}
+                  isPlaying={song.id === currentSong!.id}
+                  isLike={likeListSet.has(Number(song.id))}
+                  setOpen={setOpen}
+                  titleStyle="text-white/80 font-semibold mix-blend-plus-lighter"
+                  artistStyle="text-white/60 hover:text-white/40 mix-blend-plus-lighter"
+                  coverStyle="drop-shadow-md"
+                  textStyle="text-white/60 mix-blend-plus-lighter"
+                  buttonStyle="text-white hover:bg-black/10"
+                />
+              </div>
+            )}
           />
         </div>
       </div>

@@ -14,6 +14,7 @@ export const createPlaylistSlice: StateCreator<
 
   addToPlaylist: (song) => {
     const { playlist } = get();
+    if (playlist.some((s) => Number(s.id) === Number(song.id))) return;
     set({ playlist: [...playlist, song] });
   },
 
@@ -59,5 +60,11 @@ export const createPlaylistSlice: StateCreator<
         currentIndexInPlaylist: newIdx,
       });
     }
+  },
+
+  isInPlaylist: (song: Song) => {
+    const { playlist } = get();
+
+    return playlist.some((s) => s.id === song.id);
   },
 });

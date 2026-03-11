@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import React from "react";
 import { toast } from "sonner";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function SongPreview({ resources }: { resources: Resource[] }) {
   return (
@@ -88,8 +89,16 @@ export function SongPreviewItem({ resource }: { resource: Resource }) {
     }
   }
 
+  const openMenu = useContextMenuStore((s) => s.openMenu);
+
   return (
-    <div className="flex gap-4 justify-between group">
+    <div
+      className={cn("flex gap-4 justify-between group")}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY, "resource", resource);
+      }}
+    >
       <div
         className="w-16 h-16 rounded-sm overflow-hidden relative  cursor-pointer border"
         onClick={handlePlay}
@@ -133,7 +142,13 @@ export function SongPreviewItem({ resource }: { resource: Resource }) {
             isLiked && "text-red-500 hover:text-red-700",
           )}
         />
-        <MoreHorizontal24Regular className="size-5 text-foreground cursor-pointer hover:text-foreground/80" />
+        <MoreHorizontal24Regular
+          className="size-5 text-foreground cursor-pointer hover:text-foreground/80"
+          onClick={(e) => {
+            e.preventDefault();
+            openMenu(e.clientX, e.clientY, "resource", resource);
+          }}
+        />
       </div>
     </div>
   );

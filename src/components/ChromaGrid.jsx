@@ -2,6 +2,7 @@ import { useRef } from "react";
 import "./ChromaGrid.css";
 import { Link } from "react-router-dom";
 import { Play24Filled } from "@fluentui/react-icons";
+import { useContextMenuStore } from "../lib/store/contextMenuStore";
 
 export const ChromaGrid = ({
   items,
@@ -10,6 +11,7 @@ export const ChromaGrid = ({
   rows = 2,
 }) => {
   const rootRef = useRef(null);
+  const openMenu = useContextMenuStore((s) => s.openMenu);
 
   const handleMove = (e) => {
     if (!rootRef.current) return;
@@ -35,7 +37,14 @@ export const ChromaGrid = ({
       onPointerMove={handleMove}
     >
       {items.map((c, i) => (
-        <Link to={c.url} key={i}>
+        <Link
+          to={c.url}
+          key={i}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            openMenu(e.clientX, e.clientY, "resource", c);
+          }}
+        >
           <article
             className="chroma-card"
             style={{

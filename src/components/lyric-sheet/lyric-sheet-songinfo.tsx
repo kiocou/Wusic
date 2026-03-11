@@ -24,6 +24,7 @@ import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import { sfQuoteBubble, sfQuoteBubbleFill } from "@bradleyhodges/sfsymbols";
 import { Link } from "react-router-dom";
 import { YeeButton } from "../yee-button";
+import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function LyricSheetSonginfo({
   setIsOpen,
@@ -93,6 +94,7 @@ function SongMeta({
   onLyricOpenChangeAction: (v: boolean) => void;
 }) {
   const currentSong = usePlayerStore((s) => s.currentSong);
+  const openMenu = useContextMenuStore((s) => s.openMenu);
 
   const { likeListSet, toggleLikeMusic: toggleLike } = useUserStore();
   const isLike = likeListSet.has(currentSong?.id || 0);
@@ -171,6 +173,10 @@ function SongMeta({
           variant="ghost"
           icon={<MoreHorizontal24Filled className="size-5" />}
           className="size-8 hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
+          onClick={(e) => {
+            e.preventDefault();
+            openMenu(e.clientX + 10, e.clientY - 80, "song", currentSong);
+          }}
         />
       </div>
     </div>
