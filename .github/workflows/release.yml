@@ -41,8 +41,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Yee Music v__VERSION__"
@@ -50,84 +50,32 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: --verbose
+  update:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: List build artifacts
-        if: success() && matrix.platform == 'windows-latest'
-        shell: bash
-        run: |
-          echo "Listing all files in src-tauri (debug):"
-          find src-tauri -maxdepth 5 -not -path '*/.*'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
-      - name: Update updater metadata
-        if: success() && matrix.platform == 'windows-latest'
-        shell: bash
-        run: |
-          # 配置 git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'pnpm'
 
-          VERSION="${{ github.ref_name }}"
-          TAG="${{ github.ref_name }}"
-          REPO_OWNER="${{ github.repository_owner }}"
-          REPO_NAME="${{ github.event.repository.name }}"
+      - name: Install Dependencies
+        run: pnpm install
 
-          # 1. 在整个 src-tauri 目录下递归搜索 .sig 文件
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-
-            function findFile(dir, predicate) {
-              if (!fs.existsSync(dir)) return null;
-              const files = fs.readdirSync(dir);
-              for (const file of files) {
-                const fullPath = path.join(dir, file);
-                try {
-                  const stats = fs.statSync(fullPath);
-                  if (stats.isDirectory()) {
-                    const found = findFile(fullPath, predicate);
-                    if (found) return found;
-                  } else if (predicate(file)) {
-                    return fullPath;
-                  }
-                } catch (e) {}
-              }
-              return null;
-            }
-
-            console.log('正在搜索签名文件 (.sig)...');
-            const searchRoot = 'src-tauri';
-            const sigPath = findFile(searchRoot, f => f.endsWith('.sig'));
-
-            if (!sigPath) {
-              console.error('错误: 在 ' + searchRoot + ' 目录下找不到任何 .sig 签名文件。');
-              console.error('这通常意味着 Tauri 构建过程中没有进行签名。');
-              console.error('请检查 GitHub Secrets 中的 TAURI_PRIVATE_KEY 是否正确（应该是以 untrusted comment 开头的文本，而不是 Base64 字符串）。');
-              process.exit(1);
-            }
-
-            console.log('成功找到签名文件:', sigPath);
-            const signature = fs.readFileSync(sigPath, 'utf-8').trim();
-            const assetFile = path.basename(sigPath).replace('.sig', '');
-            const downloadUrl = 'https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${TAG}/' + assetFile;
-
-            const latest = {
-              version: '${TAG}',
-              notes: 'Update released on ' + new Date().toISOString(),
-              pub_date: new Date().toISOString(),
-              platforms: {
-                'windows-x86_64': { signature, url: downloadUrl }
-              }
-            };
-
-            fs.writeFileSync('latest_temp.json', JSON.stringify(latest, null, 2));
-          "
-
-          git fetch origin updater || git checkout --orphan updater
-          git checkout updater
-          git pull origin updater || true
-
-          mv latest_temp.json latest.json
-
-          git add latest.json
-          git commit -m "update updater metadata for ${TAG}" || echo "No changes to commit"
-          git push origin updater
+      - name: Generate Update Manifest
+        run: node scripts/update.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
