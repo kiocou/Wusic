@@ -50,6 +50,7 @@ jobs:
       - name: Update updater metadata
         # 仅在 windows 构建成功后尝试更新 metadata
         if: success() && matrix.platform == 'windows-latest'
+        shell: bash
         run: |
           # 配置 git
           git config --global user.name "github-actions[bot]"

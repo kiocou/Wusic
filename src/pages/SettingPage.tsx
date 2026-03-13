@@ -17,6 +17,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SONG_QUALITY } from "@/lib/constants/song";
 import {
+  CheckmarkCircle24Filled,
   CheckmarkStarburst24Regular,
   Color24Regular,
   Speaker224Regular,
@@ -87,7 +88,7 @@ function AudioSettingCard() {
     <div className="flex flex-col gap-1">
       <SettingsExpandar
         title="音频质量"
-        subtitle="选择优先播放的音质"
+        subtitle="选择优先播放的音质（待实现）"
         icon={<Speaker224Regular />}
         trailing={
           <Combobox value={"无损"}>
@@ -187,6 +188,7 @@ function ThemeSettingCard() {
 
 function UpdateSettingCard() {
   const [checking, setChecking] = useState(false);
+  const [isNewest, setIsNewest] = useState(false);
 
   async function checkForUpdates() {
     const update = await check();
@@ -214,6 +216,12 @@ function UpdateSettingCard() {
 
       console.log("update installed");
       await relaunch();
+    } else {
+      setIsNewest(true);
+
+      setTimeout(() => {
+        setIsNewest(false);
+      }, 3000);
     }
   }
 
@@ -229,8 +237,9 @@ function UpdateSettingCard() {
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-0">
       <SettingsExpandar
+        className={cn(isNewest && "rounded-b-none")}
         title="Beta 0.1.6"
         subtitle="上次更新：2026-03-14"
         icon={<CheckmarkStarburst24Regular />}
@@ -251,6 +260,12 @@ function UpdateSettingCard() {
           </div>
         }
       ></SettingsExpandar>
+      {isNewest && (
+        <div className="bg-green-400/25 rounded-b-md border-t-0 border-border p-4 flex items-center gap-2 text-sm">
+          <CheckmarkCircle24Filled className="text-green-600" />
+          已更新到最新版本
+        </div>
+      )}
     </div>
   );
 }
