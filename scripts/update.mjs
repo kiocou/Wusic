@@ -31,7 +31,10 @@ const { owner, repo } = context.repo;
 
 try {
   // 1. 获取最新的正式发布（由tauri-action创建）
-  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease();
+  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
+    owner,
+    repo,
+  });
   console.log(`Processing release: ${latestRelease.tag_name}`);
   updateData.name = latestRelease.tag_name;
 
