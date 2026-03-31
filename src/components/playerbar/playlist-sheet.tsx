@@ -34,7 +34,7 @@ export function PlaylistSheet() {
       <SheetTrigger asChild>
         <YeeButton
           variant="ghost"
-          icon={<TextBulletList24Regular className="size-6" />}
+          icon={<TextBulletList24Regular className="size-5" />}
         />
       </SheetTrigger>
       <SheetContent

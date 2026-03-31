@@ -107,7 +107,6 @@ export function PlaylistEditButton({
         <YeeButton
           variant="outline"
           icon={<Edit24Filled className="size-4" />}
-          className="bg-card/40! backdrop-blur"
         />
       }
     >

@@ -14,7 +14,7 @@ interface PlayerBarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElem
 const YeeButtonVariants = cva("cursor-pointer", {
   variants: {
     variant: {
-      outline: "rounded-full cursor-pointer border-0 drop-shadow-md",
+      outline: "rounded-full cursor-pointer border-0 drop-shadow-md bg-card!",
       ghost: "",
     },
   },

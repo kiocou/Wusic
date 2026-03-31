@@ -108,7 +108,6 @@ export function PlaylistPage({
             onClick={() => playList(playlistId, "list")}
             disabled={playlist.trackCount === 0}
             icon={<Play24Filled className="size-4" />}
-            className="bg-card/40! backdrop-blur"
           />
           {isMyPlaylist && !isFavList && (
             <>
@@ -118,7 +117,6 @@ export function PlaylistPage({
           )}
           {!isMyPlaylist && (
             <YeeButton
-              className="bg-white"
               variant="outline"
               icon={
                 <LikeIcon
@@ -135,7 +133,7 @@ export function PlaylistPage({
           <Input
             placeholder={searchOpen ? "搜索..." : ""}
             className={cn(
-              "h-9 bg-white rounded-full border-0 drop-shadow-md",
+              "h-9 bg-card! rounded-full border-0 drop-shadow-md",
               "focus:border-0 focus:ring-0!",
               "transition-all duration-300 ease-in-out",
               searchOpen ? "w-48 pl-8" : "w-9 cursor-pointer",

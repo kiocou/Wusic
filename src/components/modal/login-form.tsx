@@ -229,7 +229,7 @@ export function LoginForm({
                     }
                   }}
                   className={cn(
-                    "rounded-full bg-white w-full drop-shadow-sm",
+                    "rounded-full bg-white w-full drop-shadow-sm border-b-0",
                     error && "ring-destructive ring-2",
                   )}
                   autoComplete="off"
@@ -252,7 +252,7 @@ export function LoginForm({
                       setCaptchaPassed(false);
                     }}
                     onBlur={handleVerifyCaptcha}
-                    className="rounded-full bg-white flex-1 drop-shadow-sm"
+                    className="rounded-full bg-white flex-1 drop-shadow-sm border-b-0"
                   />
                   <motion.button
                     className={cn(

@@ -231,7 +231,7 @@ export function AppSidebar() {
                             <div className="size-6 relative rounded-sm overflow-hidden shrink-0 flex items-center justify-center">
                               <Add24Filled className="size-4!" />
                             </div>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-foreground/60">
                               新建歌单
                             </span>
                           </div>

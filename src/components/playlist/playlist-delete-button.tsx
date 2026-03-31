@@ -60,7 +60,6 @@ export function PlaylistDeleteButton({ playlist }: { playlist: Playlist }) {
         <YeeButton
           variant="outline"
           icon={<Delete24Filled className="size-4" />}
-          className="bg-card/40! backdrop-blur"
         />
       }
       footer={

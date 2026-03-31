@@ -88,7 +88,7 @@ function LeftButtonRegion() {
                   className="w-12 h-12 group-hover:brightness-50 transform transition-all duration-300 ease-in-out"
                 />
               </div>
-              <SlideSize24Regular className="opacity-0 group-hover:opacity-100 size-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white  transform transition-all duration-300 ease-in-out" />
+              <SlideSize24Regular className="opacity-0 group-hover:opacity-100 size-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white  transform transition-all duration-300 ease-in-out" />
             </div>
           </LyricSheet>
 
@@ -116,14 +116,14 @@ function LeftButtonRegion() {
               variant="ghost"
               onClick={handleLike}
               icon={
-                <LikeIcon className={cn("size-5", isLike && "text-red-500")} />
+                <LikeIcon className={cn("size-4", isLike && "text-red-500")} />
               }
             />
           </div>
         </>
       ) : (
         <div className="w-12 h-12 rounded-sm overflow-hidden border shadow-sm flex justify-center items-center">
-          <SFIcon icon={sfBrandItunesNote} className="size-6 text-black/40" />
+          <SFIcon icon={sfBrandItunesNote} className="size-5 text-black/40" />
         </div>
       )}
     </div>
@@ -151,13 +151,13 @@ function CenterButtonRegion() {
         variant="ghost"
         disabled={!canShuffle}
         onClick={toggleShuffleMode}
-        icon={<shuffleConfig.icon className="size-5" />}
+        icon={<shuffleConfig.icon className="size-4" />}
       />
 
       <YeeButton
         variant="ghost"
         onClick={prev}
-        icon={<Previous24Filled className="size-6" />}
+        icon={<Previous24Filled className="size-5" />}
       />
 
       {isLoadingMusic ? (
@@ -168,20 +168,20 @@ function CenterButtonRegion() {
         <YeeButton
           variant="ghost"
           onClick={() => togglePlay()}
-          icon={<PlayIcon className="size-6" />}
+          icon={<PlayIcon className="size-5" />}
         />
       )}
 
       <YeeButton
         variant="ghost"
         onClick={next}
-        icon={<Next24Filled className="size-6" />}
+        icon={<Next24Filled className="size-5" />}
       />
 
       <YeeButton
         variant="ghost"
         onClick={toggleRepeatMode}
-        icon={<repeatModeConfig.icon className="size-5" />}
+        icon={<repeatModeConfig.icon className="size-4" />}
       />
     </div>
   );
@@ -205,7 +205,7 @@ function RightButtonRegion() {
           e.preventDefault();
           openMenu(e.clientX, e.clientY, "song", currentSong);
         }}
-        icon={<MoreHorizontal24Filled className="size-6" />}
+        icon={<MoreHorizontal24Filled className="size-5" />}
       />
     </div>
   );

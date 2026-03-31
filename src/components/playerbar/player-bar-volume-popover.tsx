@@ -22,7 +22,7 @@ export function PlayerBarVolumePopover() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <YeeButton variant="ghost" icon={<VolumeButton className="size-6" />} />
+        <YeeButton variant="ghost" icon={<VolumeButton className="size-5" />} />
       </PopoverTrigger>
       <PopoverContent side="top" sideOffset={32} className="w-48 rounded-lg">
         <div className="flex gap-2 items-center">

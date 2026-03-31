@@ -25,7 +25,7 @@ import {
   useTransform,
 } from "framer-motion";
 
-const LYRIC_CROLL_DELAY = 0.08;
+const LYRIC_CROLL_DELAY = 0.04;
 
 const MASK_IMAGE =
   "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)";
@@ -466,23 +466,23 @@ export const SongLyricLine = forwardRef<
                 : isLargeJump
                   ? {
                       type: "spring",
-                      stiffness: 170,
-                      damping: 26,
+                      stiffness: 120,
+                      damping: 20,
                       mass: 0.5,
                       delay: 0,
                     }
                   : {
                       type: "spring",
-                      stiffness: 170,
-                      damping: 26,
+                      stiffness: 120,
+                      damping: 20,
                       mass: 0.8,
                       delay: scrollDelay,
                     },
             y: isLayoutChanging
               ? {
                   type: "spring",
-                  stiffness: 170,
-                  damping: 26,
+                  stiffness: 120,
+                  damping: 20,
                   mass: 0.8,
                   delay: 0,
                 }
@@ -495,15 +495,15 @@ export const SongLyricLine = forwardRef<
                 : isLargeJump
                   ? {
                       type: "spring",
-                      stiffness: 170,
-                      damping: 26,
+                      stiffness: 120,
+                      damping: 20,
                       mass: 0.5,
                       delay: 0,
                     }
                   : {
                       type: "spring",
-                      stiffness: 170,
-                      damping: 26,
+                      stiffness: 120,
+                      damping: 20,
                       mass: 0.8,
                       delay: scrollDelay,
                     },
@@ -574,12 +574,12 @@ export const SongLyricLine = forwardRef<
         }}
         animate={{ y: targetScrollY }}
         transition={{
-          layout: { type: "spring", stiffness: 170, damping: 26, mass: 0.8 },
+          layout: { type: "spring", stiffness: 120, damping: 20, mass: 0.8 },
           y: isLayoutChanging
             ? {
                 type: "spring",
-                stiffness: 170,
-                damping: 26,
+                stiffness: 120,
+                damping: 20,
                 mass: 0.8,
                 delay: 0,
               }
@@ -588,15 +588,15 @@ export const SongLyricLine = forwardRef<
               : isLargeJump
                 ? {
                     type: "spring",
-                    stiffness: 170,
-                    damping: 26,
+                    stiffness: 120,
+                    damping: 20,
                     mass: 0.5,
                     delay: 0,
                   }
                 : {
                     type: "spring",
-                    stiffness: 170,
-                    damping: 26,
+                    stiffness: 120,
+                    damping: 20,
                     mass: 0.8,
                     delay: scrollDelay,
                   },
