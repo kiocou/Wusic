@@ -97,7 +97,11 @@ export function SearchInput() {
       <Input
         placeholder={placeholder}
         className={cn(
-          "w-72 bg-card/60! pr-8 rounded-md shadow-xs border-border/80 focus:border-border/80! focus:ring-0!",
+          "w-72 bg-card/60! pr-8 shadow-xs border-border/80 focus:border-border/80!",
+          isOpen && suggestions.length > 0 && "rounded-b-none",
+        )}
+        containerClassName={cn(
+          "rounded-md",
           isOpen && suggestions.length > 0 && "rounded-b-none",
         )}
         value={query}
@@ -141,13 +145,6 @@ export function SearchInput() {
                 </div>
               ))}
             </div>
-
-            <motion.span
-              className="absolute top-0 w-full h-0.5 bg-primary left-1/2 -translate-x-1/2"
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "100%" }}
-              exit={{ opacity: 0, width: 0 }}
-            ></motion.span>
           </motion.div>
         )}
       </AnimatePresence>

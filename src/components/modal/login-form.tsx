@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Checkmark24Filled } from "@fluentui/react-icons";
 import { useSettingStore } from "@/lib/store/settingStore";
+import { Button } from "../ui/button";
 
 export function LoginForm({
   open,
@@ -38,7 +39,7 @@ export function LoginForm({
   const [phone, setPhone] = useState("");
   const [captcha, setCaptcha] = useState("");
   const [captchaPassed, setCaptchaPassed] = useState(false);
-  const [error, setError] = useState("账号未注册，请重试");
+  const [error, setError] = useState("");
 
   // const [qrKey, setQrKey] = useState("");
   const [qrCodeImg, setQrCodeImg] = useState("");
@@ -229,9 +230,10 @@ export function LoginForm({
                     }
                   }}
                   className={cn(
-                    "rounded-full bg-white w-full drop-shadow-sm border-b-0",
-                    error && "ring-destructive ring-2",
+                    "bg-muted w-full",
+                    error && "border-destructive border-2",
                   )}
+                  containerClassName="rounded-sm"
                   autoComplete="off"
                 />
                 <span className="text-destructive text-xs -mt-1 absolute -bottom-6.5">
@@ -252,12 +254,13 @@ export function LoginForm({
                       setCaptchaPassed(false);
                     }}
                     onBlur={handleVerifyCaptcha}
-                    className="rounded-full bg-white flex-1 drop-shadow-sm border-b-0"
+                    className="bg-muted"
+                    containerClassName="rounded-sm flex-1"
                   />
                   <motion.button
                     className={cn(
-                      captchaPassed ? "bg-green-600!" : "bg-foreground",
-                      "rounded-full shrink-0  px-4 whitespace-nowrap overflow-hidden flex items-center justify-center bg-background text-foreground",
+                      captchaPassed ? "bg-green-600!" : "bg-muted",
+                      "cursor-pointer rounded-full shrink-0 px-4 whitespace-nowrap overflow-hidden flex items-center justify-center bg-muted text-foreground",
                     )}
                     disabled={isLoad || captchaPassed}
                     onClick={handleGetCaptcha}

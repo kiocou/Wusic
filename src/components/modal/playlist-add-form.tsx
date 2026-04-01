@@ -84,7 +84,7 @@ export function PlaylistAddForm({
         <div className="relative">
           <Input
             placeholder="歌单名称"
-            className="rounded-full bg-white drop-shadow-sm text-black/80 pr-8"
+            className="text-foreground/80 pr-8"
             value={name}
             onChange={(e) => {
               if (e.target.value.length > 40) {
@@ -93,7 +93,7 @@ export function PlaylistAddForm({
               setName(e.target.value);
             }}
           />
-          <span className="text-xs text-black/60 absolute right-4 bottom-1/2 translate-y-1/2">
+          <span className="text-xs text-foreground/60 absolute right-4 bottom-1/2 translate-y-1/2">
             {leftNameLength}
           </span>
         </div>

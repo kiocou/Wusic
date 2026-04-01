@@ -1,5 +1,5 @@
 import { api } from "../api";
-import { Account, UserProfile, Playlist, Artist } from "../types";
+import { Account, UserProfile, Playlist, Artist, Album } from "../types";
 
 interface UserDetailResponse {
   code: number;
@@ -42,6 +42,13 @@ interface LikeListResponse {
 
 interface LikeArtistResponse {
   data: Artist[];
+  hasMore: boolean;
+  count: number;
+  code: number;
+}
+
+interface LikeAlbumResponse {
+  data: Album[];
   hasMore: boolean;
   count: number;
   code: number;
@@ -93,8 +100,48 @@ export async function likeSong(id: number | string, like: boolean = true) {
   return true;
 }
 
-export async function getUserLikeArtists() {
-  return api.get<LikeArtistResponse>("/artist/sublist");
+export async function getUserLikeArtists(limit: number = 25) {
+  return api.get<LikeArtistResponse>("/artist/sublist", {
+    limit: limit.toString(),
+  });
+}
+
+// 收藏/取消收藏歌手
+// 登录后调用此接口 , 可以收藏/取消收藏歌手
+// t = 1 收藏
+// t = 其他值 取消收藏
+export async function subArtist(id: number | string, t: number) {
+  const res = await api.get<{ code: number }>("/artist/sub", {
+    id: id.toString(),
+    t: t.toString(),
+  });
+
+  if (res.code !== 200) return false;
+
+  return true;
+}
+
+export async function getUserLikeAlbums(
+  limit: number = 25,
+  offset: number = 0,
+) {
+  const res = await api.get<LikeAlbumResponse>("/album/sub", {
+    limit: limit.toString(),
+    offset: offset.toString(),
+  });
+
+  return res;
+}
+
+export async function subAlbum(id: number | string, t: number) {
+  const res = await api.get<{ code: number }>("/album/sub", {
+    id: id.toString(),
+    t: t.toString(),
+  });
+
+  if (res.code !== 200) return false;
+
+  return true;
 }
 
 export async function getUserPlaylists(

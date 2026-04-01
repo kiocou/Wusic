@@ -119,7 +119,8 @@ export function PlaylistEditButton({
         <div className="w-full flex flex-col gap-6">
           <div className="relative">
             <Input
-              className="rounded-full bg-card drop-shadow-sm text-foreground/80 pr-16"
+              className="rounded-full bg-muted text-foreground/80 pr-16"
+              containerClassName="rounded-full"
               value={title}
               onChange={(e) => {
                 if (e.target.value.length > maxTitleLength) return;
@@ -133,7 +134,7 @@ export function PlaylistEditButton({
 
           <div className="h-full relative">
             <Textarea
-              className="h-full resize-none rounded-2xl bg-card drop-shadow-md text-foreground/80 p-4"
+              className="h-full resize-none rounded-2xl bg-muted text-foreground/80 p-4"
               placeholder="在此填写简介..."
               value={intro}
               onChange={(e) => {

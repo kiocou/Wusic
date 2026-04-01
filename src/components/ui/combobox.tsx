@@ -63,7 +63,7 @@ function ComboboxInput({
   return (
     <InputGroup
       className={cn(
-        "w-auto bg-card focus-within:ring-0! focus-within:border-border! focus-within:cursor-default! rounded-sm border-b-2",
+        "w-auto bg-card focus-within:ring-0! focus-within:border-border! cursor-default! rounded-sm border-b-2",
         className,
       )}
     >

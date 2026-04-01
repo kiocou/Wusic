@@ -1,7 +1,6 @@
 import { StateCreator } from "zustand";
 import { PlayerControlSlice, SharedPlayerState } from "@/lib/types/player";
 import {
-  checkMusic,
   getSongLyric,
   getSongMusicDetail,
   getSongUrl,
@@ -18,7 +17,6 @@ import { getPlaylistAllTrack } from "@/lib/services/playlist";
 import { getAlbum } from "@/lib/services/album";
 import { getArtistAllSongs } from "@/lib/services/artist";
 import { REPEAT_MODE_CONFIG } from "@/lib/constants/player";
-import { useUserStore } from "../userStore";
 
 let currentPlayAbortController: AbortController | null = null;
 

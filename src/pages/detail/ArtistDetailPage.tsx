@@ -12,12 +12,16 @@ import { Artist } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   Heart24Filled,
+  Heart24Regular,
   Play24Filled,
   Search24Regular,
 } from "@fluentui/react-icons";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Loading } from "@/components/loading";
+import { useUserStore } from "@/lib/store/userStore";
+import { subArtist } from "@/lib/services/user";
+import { toast } from "sonner";
 
 function ArtistContent() {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +34,15 @@ function ArtistContent() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   const playArtist = usePlayerStore((s) => s.playArtist);
+
+  const artistListSet = useUserStore((s) => s.artistListSet);
+  const toggleLikeArtist = useUserStore((s) => s.toggleLikeArtist);
+  const isLike = artistListSet.has(Number(id));
+  const likeIcon = isLike ? (
+    <Heart24Filled className="size-4 text-red-500" />
+  ) : (
+    <Heart24Regular className="size-4" />
+  );
 
   useEffect(() => {
     async function fetchArtistDetail() {
@@ -47,6 +60,24 @@ function ArtistContent() {
     }
     fetchArtistDetail();
   }, [id]);
+
+  async function toggleLike() {
+    const targetLike = !isLike;
+
+    toggleLikeArtist(artist!, targetLike);
+
+    try {
+      const res = await subArtist(id!, targetLike ? 1 : 2);
+
+      if (!res) {
+        toggleLikeArtist(artist!, isLike);
+        toast.error("操作失败，请稍后重试...", { position: "top-center" });
+      }
+    } catch (err) {
+      toggleLikeArtist(artist!, isLike);
+      toast.error("操作失败，请稍后重试...", { position: "top-center" });
+    }
+  }
 
   const renderContent = (searchQuery?: string) => {
     switch (tabValue) {
@@ -95,7 +126,8 @@ function ArtistContent() {
                   <YeeButton
                     variant="outline"
                     className="bg-card"
-                    icon={<Heart24Filled className="size-4 text-red-500" />}
+                    icon={likeIcon}
+                    onClick={toggleLike}
                   />
                 </div>
               </div>
@@ -122,7 +154,7 @@ function ArtistContent() {
                   <Input
                     placeholder={searchOpen ? "搜索..." : ""}
                     className={cn(
-                      "h-9 bg-card rounded-full border-0 drop-shadow-md",
+                      "h-9 bg-card rounded-full border-0",
                       "focus:border-0 focus:ring-0!",
                       "transition-all duration-300 ease-in-out",
                       searchOpen ? "w-48 pl-8" : "w-9 cursor-pointer",
@@ -133,6 +165,8 @@ function ArtistContent() {
                     onBlur={() => {
                       if (!searchQuery) setSearchOpen(false);
                     }}
+                    containerClassName="rounded-full drop-shadow-md"
+                    showIndicator={false}
                   />
                 </div>
               )}

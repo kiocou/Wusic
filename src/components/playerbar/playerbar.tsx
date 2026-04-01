@@ -70,7 +70,6 @@ function LeftButtonRegion() {
     } catch (error) {
       toggleLike(Number(currentSong?.id), isLike);
       toast.error("操作失败，请稍后重试...", { position: "top-center" });
-      console.log("切换歌曲喜欢状态失败", error);
     }
   }
 

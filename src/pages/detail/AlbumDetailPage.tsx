@@ -7,11 +7,18 @@ import { getAlbum } from "@/lib/services/album";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { Album } from "@/lib/types";
 import { cn, formateDate } from "@/lib/utils";
-import { Heart24Filled, Play24Filled } from "@fluentui/react-icons";
+import {
+  Heart24Filled,
+  Heart24Regular,
+  Play24Filled,
+} from "@fluentui/react-icons";
 import { Link } from "react-router-dom";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Loading } from "@/components/loading";
+import { useUserStore } from "@/lib/store/userStore";
+import { subAlbum } from "@/lib/services/user";
+import { toast } from "sonner";
 
 function AlbumContent() {
   const [searchParams] = useSearchParams();
@@ -20,6 +27,15 @@ function AlbumContent() {
   const [album, setAlbum] = useState<Album | null>(null);
   const [tabValue, setTabValue] = useState("song");
   const playList = usePlayerStore((s) => s.playList);
+
+  const albumListSet = useUserStore((s) => s.albumListSet);
+  const toggleLikeAlbum = useUserStore((s) => s.toggleLikeAlbum);
+  const isLike = albumListSet.has(Number(id));
+  const likeIcon = isLike ? (
+    <Heart24Filled className="size-4 text-red-500" />
+  ) : (
+    <Heart24Regular className="size-4" />
+  );
 
   useEffect(() => {
     async function fetchAlbumDetail() {
@@ -36,6 +52,24 @@ function AlbumContent() {
     }
     fetchAlbumDetail();
   }, [id]);
+
+  async function toggleLike() {
+    const targetLike = !isLike;
+
+    toggleLikeAlbum(album!, targetLike);
+
+    try {
+      const res = await subAlbum(id!, targetLike ? 1 : 2);
+
+      if (!res) {
+        toggleLikeAlbum(album!, isLike);
+        toast.error("操作失败，请稍后重试...", { position: "top-center" });
+      }
+    } catch (err) {
+      toggleLikeAlbum(album!, isLike);
+      toast.error("操作失败，请稍后重试...", { position: "top-center" });
+    }
+  }
 
   const renderContent = () => {
     switch (tabValue) {
@@ -109,7 +143,8 @@ function AlbumContent() {
                 />
                 <YeeButton
                   variant="outline"
-                  icon={<Heart24Filled className="size-4 text-red-500" />}
+                  icon={likeIcon}
+                  onClick={toggleLike}
                 />
               </div>
             </div>

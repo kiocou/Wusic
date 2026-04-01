@@ -42,7 +42,7 @@ export function YeeDialog({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent
           className={cn(
-            "sm:max-w-sm rounded-3xl drop-shadow-2xl backdrop-blur-md border text-md select-none bg-card/80 text-foreground",
+            "sm:max-w-sm rounded-3xl drop-shadow-2xl backdrop-blur-md border text-md select-none bg-card text-foreground",
             contentClassName,
           )}
           showCloseButton={false}

@@ -131,13 +131,15 @@ export function PlaylistPage({
         <div className="relative flex items-center">
           <Search24Filled className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground/60 pointer-events-none z-10" />
           <Input
+            showIndicator={false}
             placeholder={searchOpen ? "搜索..." : ""}
             className={cn(
-              "h-9 bg-card! rounded-full border-0 drop-shadow-md",
+              "h-9 bg-card! rounded-full border-0",
               "focus:border-0 focus:ring-0!",
               "transition-all duration-300 ease-in-out",
               searchOpen ? "w-48 pl-8" : "w-9 cursor-pointer",
             )}
+            containerClassName="rounded-full drop-shadow-md"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setSearchOpen(true)}

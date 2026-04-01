@@ -3,13 +3,20 @@
 import { useUserStore } from "@/lib/store/userStore";
 import { loginStatus } from "@/lib/services/auth";
 import { useEffect } from "react";
-import { getUserLikeList, getUserPlaylists } from "@/lib/services/user";
+import {
+  getUserLikeAlbums,
+  getUserLikeArtists,
+  getUserLikeList,
+  getUserPlaylists,
+} from "@/lib/services/user";
 
 export function AuthConfig() {
   const setUser = useUserStore((state) => state.setUser);
   const user = useUserStore((state) => state.user);
   const setLikeList = useUserStore((state) => state.setLikeList);
   const setPlaylistList = useUserStore((state) => state.setPlaylistList);
+  const setArtistList = useUserStore((s) => s.setArtistList);
+  const setAlbumList = useUserStore((s) => s.setAlbumList);
 
   useEffect(() => {
     if (user) return;
@@ -79,6 +86,37 @@ export function AuthConfig() {
 
     fetchPlaylists();
   }, [user, setPlaylistList]);
+
+  // 获取收藏歌单列表
+  useEffect(() => {
+    async function fetchArtists() {
+      if (!user) return;
+
+      try {
+        const res = await getUserLikeArtists(100);
+        setArtistList(res.data);
+      } catch (err) {
+        console.error("获取收藏歌手失败:", err);
+      }
+    }
+
+    fetchArtists();
+  }, [user, setArtistList]);
+
+  useEffect(() => {
+    async function fetchAlbums() {
+      if (!user) return;
+
+      try {
+        const res = await getUserLikeAlbums(1000);
+        setAlbumList(res.data);
+      } catch (err) {
+        console.error("获取收藏专辑失败:", err);
+      }
+    }
+
+    fetchAlbums();
+  }, [user, setAlbumList]);
 
   return null;
 }

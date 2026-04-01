@@ -19,7 +19,10 @@ import { YeeButton } from "../yee-button";
 import { Virtuoso } from "react-virtuoso";
 
 export function PlaylistSheet() {
-  const { playlist, currentSong, clearPlaylist } = usePlayerStore();
+  const playlist = usePlayerStore((s) => s.playlist);
+  const currentSong = usePlayerStore((s) => s.currentSong);
+  const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
+
   const { likeListSet } = useUserStore();
   const [open, setOpen] = useState(false);
 
