@@ -14,6 +14,7 @@ import { SlideAndFadePage } from "@/components/slide-and-fade-page";
 import useSWR from "swr";
 import { RecentListenSection } from "@/components/home/recent-listen-section";
 import { useUserStore } from "@/lib/store/userStore";
+import { RecommendAndFMSection } from "@/components/home/recommend-and-fm-section";
 
 export default function Page() {
   const { setOnRefresh, setIsRefreshing } = useTitlebar();
@@ -66,6 +67,8 @@ export default function Page() {
         <Loading />
       ) : (
         <div className="w-full min-h-full h-full px-8 py-8 flex flex-col gap-12">
+          <RecommendAndFMSection />
+
           {recentListenList && (
             <RecentListenSection resources={recentListenList.resources} />
           )}

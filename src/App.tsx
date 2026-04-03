@@ -14,6 +14,7 @@ import { listen } from "@tauri-apps/api/event";
 import { initMediaSession } from "./lib/store/mediaSessionSync";
 import DownloadPage from "./pages/library/DownloadPage";
 import LocalPage from "./pages/library/LocalPage";
+import { DailyRecommendPage } from "./pages/recommend/DailyRecommendPage";
 
 const router = createBrowserRouter([
   {
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <ProfilePage />,
+      },
+      {
+        path: "recommend/daily",
+        element: <DailyRecommendPage />,
       },
     ],
   },

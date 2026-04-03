@@ -1,6 +1,13 @@
 import { api } from "../api";
 import { SONG_QUALITY } from "../constants/song";
-import { Level, Privilege, Quality, Song, SongLyric } from "../types";
+import {
+  Level,
+  Privilege,
+  Quality,
+  QualityWithKey,
+  Song,
+  SongLyric,
+} from "../types";
 
 interface SongDetailResponse {
   code: number;
@@ -125,8 +132,8 @@ export async function getSongMusicDetail(
           ...value,
         };
     })
-    .filter((item) => item !== undefined)
-    .sort((b, a) => a!.size - b!.size);
+    .filter((item): item is QualityWithKey => item !== undefined)
+    .sort((b, a) => a.size - b.size);
 
   return musicDetails;
 }

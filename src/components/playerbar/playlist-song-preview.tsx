@@ -108,7 +108,7 @@ export const PlaylistSongPreview = memo(
                 isPlaying && "brightness-50",
                 coverStyle,
               )}
-              src={GetThumbnail(song.al.picUrl!)}
+              src={GetThumbnail(song.al?.picUrl || song.album?.picUrl || "")}
               alt={`${song.al?.name}专辑封面`}
               loading="lazy"
             />

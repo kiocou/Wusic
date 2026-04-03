@@ -43,6 +43,7 @@ export interface Song {
   dt: number; // 时长 ms
   duration?: number;
   ar: Artist[]; // 歌手列表
+  artists?: Artist[];
   alia?: string[]; // 别名列表 第一个别名会被显示为副标题
   cd?: number; // 表示歌曲属于专辑中第几张 CD，对应音频文件的 Tag
   no?: number; // 表示歌曲属于 CD 中第几曲，0 表示没有这个字段，对应音频文件的 Tag

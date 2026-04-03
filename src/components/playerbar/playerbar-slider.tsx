@@ -11,7 +11,7 @@ export function PlayerBarSlider() {
   const currentTime = usePlayerStore((s) => s.currentTime);
 
   const currentSong = usePlayerStore((s) => s.currentSong);
-  const coverUrl = currentSong?.al?.picUrl;
+  const coverUrl = currentSong?.al?.picUrl || currentSong?.album?.picUrl;
   const [coverColor, setCoverColor] = useState("");
 
   const theme = useSettingStore((s) => s.appearance.theme);

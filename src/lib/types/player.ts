@@ -28,6 +28,8 @@ export interface PlaylistSlice {
   clearPlaylist: () => void;
   removeFromPlaylist: (song: Song) => void;
   isInPlaylist: (song: Song) => boolean;
+
+  fmPlaylist: Song[];
 }
 
 // 播放控制切片类型定义
@@ -41,7 +43,8 @@ export interface PlayerControlSlice {
   duration: number;
   currentTime: number;
 
-  playSong: (song: Song) => void;
+  playSong: (song: Song, isFm?: boolean) => void;
+  playQueue: (songs: Song[]) => void;
   playList: (
     listId: string | number,
     listType: "list" | "album" | "voicelist",
@@ -55,6 +58,14 @@ export interface PlayerControlSlice {
   seek: (percentage: number) => void;
   toggleRepeatMode: () => void;
   toggleShuffleMode: () => void;
+
+  isFmMode: boolean; // 是否是漫游模式
+  fmRepeatMode: boolean; // true：单曲循环，false：无限下一首
+  toggleFmRepeatMode: () => void;
+  playFm: () => void;
+  fetchFmSongs: () => Promise<void>;
+  nextFmSong: () => void;
+  trashFmSong: () => Promise<void>; // 将当前播放的歌曲从 FM 加入垃圾桶
 }
 
 // 歌曲信息切片类型定义

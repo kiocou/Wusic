@@ -17,6 +17,8 @@ import { getPlaylistAllTrack } from "@/lib/services/playlist";
 import { getAlbum } from "@/lib/services/album";
 import { getArtistAllSongs } from "@/lib/services/artist";
 import { REPEAT_MODE_CONFIG } from "@/lib/constants/player";
+import { Song } from "@/lib/types";
+import { fmTrash, getPersonalFm } from "@/lib/services/recommend";
 
 let currentPlayAbortController: AbortController | null = null;
 
@@ -35,7 +37,11 @@ export const createPlayerControlSlice: StateCreator<
   duration: 0,
   currentTime: 0,
 
-  playSong: async (song) => {
+  playSong: async (song, isFm = false) => {
+    if (!isFm) {
+      set({ isFmMode: false });
+    }
+
     if (currentPlayAbortController) currentPlayAbortController.abort();
     currentPlayAbortController = new AbortController();
 
@@ -59,14 +65,11 @@ export const createPlayerControlSlice: StateCreator<
 
       // 先检查歌曲是否可用
       let url;
-      const canPlay =
-        song.privilege && song.privilege.st >= 0 && song.privilege.pl > 0;
+      const canPlay = song.privilege
+        ? song.privilege.st >= 0 && song.privilege.pl > 0
+        : true; // 默认尝试当做可用处理
 
-      if (!canPlay) {
-        // 尝试解锁灰色歌曲
-        url = (await unblockMusic(song.id, signal)).data;
-        set({ currentMusicLevel: "unlock" });
-      } else {
+      if (canPlay) {
         const maxQualityKey = getQualityKeyByLevel(song.privilege?.maxBrLevel);
 
         let targetQuality: QualityKey = preferMusicLevel;
@@ -80,9 +83,24 @@ export const createPlayerControlSlice: StateCreator<
           false,
           signal,
         );
-        url = res[0].url;
+        url = res?.[0]?.url;
 
-        set({ currentMusicLevel: targetQuality });
+        if (url) {
+          set({ currentMusicLevel: targetQuality });
+        }
+      }
+
+      if (!url) {
+        // 尝试解锁灰色歌曲，或弥补普通请求失败的歌曲
+        try {
+          const unblockRes = await unblockMusic(song.id, signal);
+          url = unblockRes?.data;
+          if (url) {
+            set({ currentMusicLevel: "unlock" });
+          }
+        } catch (e) {
+          console.error("尝试解锁歌曲出错", e);
+        }
       }
 
       const musicDetail = await getSongMusicDetail(song.id, signal);
@@ -116,11 +134,23 @@ export const createPlayerControlSlice: StateCreator<
         console.log("播放被中断");
         return;
       }
+      console.error("播放歌曲失败:", err);
+      set({ isLoadingMusic: false });
     }
   },
 
+  playQueue: async (songs: Song[]) => {
+    set({
+      isLoadingMusic: true,
+      playlist: songs,
+      currentIndexInPlaylist: 0,
+      isFmMode: false,
+    });
+    await get().playSong(songs[0]);
+  },
+
   playList: async (listId, listType) => {
-    set({ isLoadingMusic: true });
+    set({ isLoadingMusic: true, isFmMode: false });
 
     try {
       let songs;
@@ -172,11 +202,11 @@ export const createPlayerControlSlice: StateCreator<
   },
 
   togglePlay: () => {
-    const { isPlaying, currentSong, playSong } = get();
+    const { isPlaying, currentSong, playSong, isFmMode } = get();
     if (!currentSong) return;
 
     if (!corePlayer.isReady()) {
-      playSong(currentSong);
+      playSong(currentSong, isFmMode);
       return;
     }
 
@@ -187,6 +217,11 @@ export const createPlayerControlSlice: StateCreator<
   },
 
   next: () => {
+    if (get().isFmMode) {
+      get().nextFmSong();
+      return;
+    }
+
     const {
       togglePlay,
       currentIndexInPlaylist,
@@ -232,6 +267,11 @@ export const createPlayerControlSlice: StateCreator<
   },
 
   prev: () => {
+    if (get().isFmMode) {
+      get().seek(0);
+      return;
+    }
+
     const {
       currentIndexInPlaylist,
       playlist,
@@ -303,5 +343,66 @@ export const createPlayerControlSlice: StateCreator<
   toggleShuffleMode: () => {
     const { isShuffle } = get();
     set({ isShuffle: !isShuffle });
+  },
+
+  isFmMode: false,
+  fmRepeatMode: false,
+
+  toggleFmRepeatMode: async () => {
+    const { fmRepeatMode } = get();
+    set({ fmRepeatMode: !fmRepeatMode });
+  },
+
+  fetchFmSongs: async () => {
+    const res = await getPersonalFm();
+    if (res && res.length > 0) {
+      set({ fmPlaylist: [...get().fmPlaylist, ...res] });
+    }
+  },
+
+  playFm: async () => {
+    const { fmPlaylist, fetchFmSongs, playSong } = get();
+
+    if (fmPlaylist.length === 0) await fetchFmSongs();
+
+    const currentFmSongs = get().fmPlaylist;
+    if (currentFmSongs.length > 0) {
+      set({ isFmMode: true });
+      playSong(currentFmSongs[0], true);
+    }
+  },
+
+  nextFmSong: () => {
+    const { fmPlaylist, fmRepeatMode, playSong, fetchFmSongs } = get();
+
+    if (fmRepeatMode) {
+      corePlayer.seek(0);
+      corePlayer.resume();
+      set({ isPlaying: true });
+      return;
+    }
+
+    const newFmPlaylist = fmPlaylist.slice(1);
+    set({ fmPlaylist: newFmPlaylist });
+
+    if (newFmPlaylist.length > 0) {
+      playSong(newFmPlaylist[0], true);
+    }
+
+    if (newFmPlaylist.length <= 1) {
+      fetchFmSongs();
+    }
+  },
+
+  trashFmSong: async () => {
+    const { currentSong, nextFmSong } = get();
+    if (!currentSong) return;
+
+    try {
+      await fmTrash(currentSong.id);
+      nextFmSong();
+    } catch (error) {
+      console.error("垃圾桶操作失败", error);
+    }
   },
 });

@@ -7,7 +7,7 @@ import { extractColors } from "extract-colors";
 export function LyricSheetBackground() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const currentSong = usePlayerStore((s) => s.currentSong);
-  const coverUrl = currentSong?.al?.picUrl;
+  const coverUrl = currentSong?.al?.picUrl || currentSong?.album?.picUrl;
   const meshGradientProps = useSettingStore((s) => s.appearance.meshGradient);
 
   const [gradientColors, setGradientColors] = useState<string[]>([

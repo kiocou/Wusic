@@ -21,7 +21,13 @@ import { YeeSlider } from "../yee-slider";
 import { GetThumbnail, cn, formatDuration } from "@/lib/utils";
 import { LyricSheetAudioLevelModel } from "./lyric-sheet-audio-level-modal";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
-import { sfQuoteBubble, sfQuoteBubbleFill } from "@bradleyhodges/sfsymbols";
+import {
+  sfHeartSlashFill,
+  sfInfinity,
+  sfQuoteBubble,
+  sfQuoteBubbleFill,
+  sfRepeat1,
+} from "@bradleyhodges/sfsymbols";
 import { Link } from "react-router-dom";
 import { YeeButton } from "../yee-button";
 import { useContextMenuStore } from "@/lib/store/contextMenuStore";
@@ -71,7 +77,9 @@ function SongCover() {
     <div className="w-full h-1/2 flex items-center justify-center translate-y-8">
       <div className="w-64 h-64 relative rounded-lg shadow-xl overflow-hidden">
         <img
-          src={GetThumbnail(currentSong!.al.picUrl!, 800)}
+          src={GetThumbnail(
+            currentSong?.al?.picUrl || currentSong?.album?.picUrl || "",
+          )}
           alt=""
           className="w-64 h-64"
         />
@@ -101,6 +109,7 @@ function SongMeta({
   const LikeIcon = isLike ? Heart24Filled : Heart24Regular;
   const PlaylistIcon = isPlaylistOpen ? List24Filled : List24Regular;
   const lyricIcon = isLyricOpen ? sfQuoteBubbleFill : sfQuoteBubble;
+  const isFmMode = usePlayerStore((s) => s.isFmMode);
 
   async function handleLike(e: React.MouseEvent) {
     e.stopPropagation();
@@ -154,15 +163,17 @@ function SongMeta({
           }}
           className="size-8 hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
         />
-        <YeeButton
-          variant="ghost"
-          icon={<PlaylistIcon className="size-5 drop-shadow-md" />}
-          onClick={() => {
-            onPlaylistOpenChangeAction(!isPlaylistOpen);
-            onLyricOpenChangeAction(false);
-          }}
-          className="size-8 hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
-        />
+        {!isFmMode && (
+          <YeeButton
+            variant="ghost"
+            icon={<PlaylistIcon className="size-5 drop-shadow-md" />}
+            onClick={() => {
+              onPlaylistOpenChangeAction(!isPlaylistOpen);
+              onLyricOpenChangeAction(false);
+            }}
+            className="size-8 hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
+          />
+        )}
         <YeeButton
           variant="ghost"
           icon={<LikeIcon className="size-5 drop-shadow-md" />}
@@ -234,6 +245,11 @@ function PlaybackControls() {
   const shuffleConfig = SHUFFLE_CONFIG[shuffleKey];
   const canShuffle = repeatModeConfig.canShuffle;
 
+  const isFmMode = usePlayerStore((s) => s.isFmMode);
+  const fmRepeatMode = usePlayerStore((s) => s.fmRepeatMode);
+  const trashFmSong = usePlayerStore((s) => s.trashFmSong);
+  const toggleFmRepeatMode = usePlayerStore((s) => s.toggleFmRepeatMode);
+
   const { togglePlay, prev, next, toggleRepeatMode, toggleShuffleMode } =
     usePlayerStore();
 
@@ -243,18 +259,30 @@ function PlaybackControls() {
         variant="ghost"
         icon={<shuffleConfig.icon className="size-5 drop-shadow-md" />}
         onClick={toggleShuffleMode}
-        disabled={!canShuffle}
+        disabled={!canShuffle || isFmMode}
         className={cn(
           "size-8 cursor-pointer hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out",
           !canShuffle && "text-white/50",
         )}
       />
-      <YeeButton
-        variant="ghost"
-        icon={<Previous24Filled className="size-8 drop-shadow-md" />}
-        onClick={prev}
-        className="size-12 hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
-      />
+
+      {isFmMode ? (
+        <YeeButton
+          variant="ghost"
+          icon={
+            <SFIcon icon={sfHeartSlashFill} className="size-8 drop-shadow-md" />
+          }
+          onClick={trashFmSong}
+          className="size-12 hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
+        />
+      ) : (
+        <YeeButton
+          variant="ghost"
+          icon={<Previous24Filled className="size-8 drop-shadow-md" />}
+          onClick={prev}
+          className="size-12 hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
+        />
+      )}
 
       {isLoadingMusic ? (
         <div className="w-16 h-16 flex items-center justify-center">
@@ -275,15 +303,32 @@ function PlaybackControls() {
         onClick={next}
         className="size-12 cursor-pointer hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out"
       />
-      <YeeButton
-        variant="ghost"
-        icon={<repeatModeConfig.icon className="size-5 drop-shadow-md" />}
-        onClick={toggleRepeatMode}
-        className={cn(
-          "size-8 cursor-pointer hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out",
-          repeatMode === "order" && "text-white/50",
-        )}
-      />
+
+      {isFmMode ? (
+        <YeeButton
+          variant="ghost"
+          icon={
+            <SFIcon
+              icon={fmRepeatMode ? sfRepeat1 : sfInfinity}
+              className="size-5 drop-shadow-md"
+            />
+          }
+          onClick={toggleFmRepeatMode}
+          className={cn(
+            "size-8 cursor-pointer hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out",
+          )}
+        />
+      ) : (
+        <YeeButton
+          variant="ghost"
+          icon={<repeatModeConfig.icon className="size-5 drop-shadow-md" />}
+          onClick={toggleRepeatMode}
+          className={cn(
+            "size-8 cursor-pointer hover:bg-white/10 hover:text-white rounded-full transition-all duration-300 ease-in-out",
+            repeatMode === "order" && "text-white/50",
+          )}
+        />
+      )}
     </div>
   );
 }

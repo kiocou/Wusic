@@ -67,4 +67,6 @@ export const createPlaylistSlice: StateCreator<
 
     return playlist.some((s) => s.id === song.id);
   },
+
+  fmPlaylist: [],
 });

@@ -18,7 +18,12 @@ import { MusicLevelPopover } from "../music-level-popover";
 import { LyricSheet } from "../lyric-sheet/lyric-sheet";
 import { Link } from "react-router-dom";
 import SFIcon from "@bradleyhodges/sfsymbols-react";
-import { sfBrandItunesNote } from "@bradleyhodges/sfsymbols";
+import {
+  sfBrandItunesNote,
+  sfHeartSlashFill,
+  sfInfinity,
+  sfRepeat1,
+} from "@bradleyhodges/sfsymbols";
 import { YeeButton } from "../yee-button";
 import { PlayerBarVolumePopover } from "./player-bar-volume-popover";
 import { PlayerBarSlider } from "./playerbar-slider";
@@ -57,7 +62,9 @@ function LeftButtonRegion() {
             <div className="shrink-0 relative group cursor-pointer">
               <div className="w-12 h-12 rounded-sm overflow-hidden relative border shadow-sm">
                 <img
-                  src={GetThumbnail(currentSong.al.picUrl!)}
+                  src={GetThumbnail(
+                    currentSong.al?.picUrl || currentSong.album?.picUrl || "",
+                  )}
                   alt="Album cover"
                   loading="eager"
                   className="w-12 h-12 group-hover:brightness-50 transform transition-all duration-300 ease-in-out"
@@ -113,6 +120,10 @@ function CenterButtonRegion() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const repeatMode = usePlayerStore((s) => s.repeatMode);
   const isShuffle = usePlayerStore((s) => s.isShuffle);
+  const isFmMode = usePlayerStore((s) => s.isFmMode);
+  const fmRepeatMode = usePlayerStore((s) => s.fmRepeatMode);
+  const trashFmSong = usePlayerStore((s) => s.trashFmSong);
+  const toggleFmRepeatMode = usePlayerStore((s) => s.toggleFmRepeatMode);
 
   const PlayIcon = isPlaying ? Pause24Filled : Play24Filled;
   const repeatModeConfig = REPEAT_MODE_CONFIG[repeatMode];
@@ -124,16 +135,24 @@ function CenterButtonRegion() {
     <div className=" flex items-center justify-center gap-4 shrink-0">
       <YeeButton
         variant="ghost"
-        disabled={!canShuffle}
+        disabled={!canShuffle || isFmMode}
         onClick={toggleShuffleMode}
         icon={<shuffleConfig.icon className="size-4" />}
       />
 
-      <YeeButton
-        variant="ghost"
-        onClick={prev}
-        icon={<Previous24Filled className="size-5" />}
-      />
+      {isFmMode ? (
+        <YeeButton
+          variant="ghost"
+          onClick={trashFmSong}
+          icon={<SFIcon icon={sfHeartSlashFill} className="size-5" />}
+        />
+      ) : (
+        <YeeButton
+          variant="ghost"
+          onClick={prev}
+          icon={<Previous24Filled className="size-5" />}
+        />
+      )}
 
       {isLoadingMusic ? (
         <div className="w-12 h-12 flex items-center justify-center">
@@ -153,11 +172,24 @@ function CenterButtonRegion() {
         icon={<Next24Filled className="size-5" />}
       />
 
-      <YeeButton
-        variant="ghost"
-        onClick={toggleRepeatMode}
-        icon={<repeatModeConfig.icon className="size-4" />}
-      />
+      {isFmMode ? (
+        <YeeButton
+          variant="ghost"
+          onClick={toggleFmRepeatMode}
+          icon={
+            <SFIcon
+              icon={fmRepeatMode ? sfRepeat1 : sfInfinity}
+              className="size-4 text-foreground/80"
+            />
+          }
+        />
+      ) : (
+        <YeeButton
+          variant="ghost"
+          onClick={toggleRepeatMode}
+          icon={<repeatModeConfig.icon className="size-4" />}
+        />
+      )}
     </div>
   );
 }
@@ -166,11 +198,13 @@ function RightButtonRegion() {
   const openMenu = useContextMenuStore((s) => s.openMenu);
   const currentSong = usePlayerStore((s) => s.currentSong);
 
+  const isFmMode = usePlayerStore((s) => s.isFmMode);
+
   return (
     <div className="flex items-center justify-end gap-4 shrink-0 pr-4">
       <MusicLevelPopover />
 
-      <PlaylistSheet />
+      {!isFmMode && <PlaylistSheet />}
 
       <PlayerBarVolumePopover />
 
