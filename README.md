@@ -20,7 +20,7 @@
   </a>
 </div>
 
-## 界面展示
+## 🖼️ 界面展示
 
 <div style="display: flex; flex-wrap: wrap; gap: 10px;">
   <img src="./docs/images/1.png" width="48%">
@@ -31,17 +31,19 @@
   <img src="./docs/images/6.png" width="48%">
 </div>
     
-## 功能与特性
-- 深度参考 Fluent UI 设计规范
+## ✨ 功能与特性
+
+- 界面设计深度参考 Fluent UI 设计规范
 - 支持 Win11 原生 Acrylic 与 Mica 效果
-- 扫码登录
-- 手机号登录
+- 扫码登录及手机号登录
 - 深浅色主题
 - 新建、编辑、删除歌单及对歌单添加\删除歌曲
 - 逐字歌词以及基于 Framer Motion 实现的类 Apple Music 风格歌词滚动动画
+- 支持调节流体渐变背景的变形强度与漩涡效果
+- 支持全局界面与独立歌词字体配置
 - 集成歌词翻译以及罗马音歌词
 
-## 更新计划
+## 📅 更新计划
 
 - [ ] 歌曲下载管理
 - [ ] 音乐网盘
@@ -49,7 +51,7 @@
 - [ ] 本地音乐播放支持
 - [ ] 桌面歌词
 
-## 快速开始
+## 🚀 快速开始
 
 在开始之前，请确保你的开发环境已安装 [Rust](https://www.rust-lang.org/tools/install) 和 [Node.js](https://nodejs.org/)。
 
@@ -76,7 +78,19 @@ pnpm tdev
 pnpm tbuild
 ```
 
-## 技术栈
+## ⚙️ 自定义 API 配置
+
+本项目不直接提供后端服务，如有需要请自行部署 [NeteaseCloudMusicAPI Enhanced](https://github.com/neteasecloudmusicapienhanced/api-enhanced)。
+
+1. 部署好 API 服务后，获取你的服务地址。
+2. 在项目根目录下的 src/lib/utils/api.ts 中，修改 BASE_URL 变量：
+
+``` ts
+// src/lib/utils/api.ts
+const BASE_URL = "你的 API 地址";
+```
+
+## 🛠️ 技术栈
 
 - **核心**: React 19, TypeScript, Rust, Tauri 2.0
 - **动画**: Framer Motion, GSAP, Three.js
@@ -84,7 +98,7 @@ pnpm tbuild
 - **状态与数据**: Zustand, SWR
 - **工具链**: Biome, Vitest
 
-## 致谢
+## 🎁 致谢
 
 - [tauri](https://github.com/tauri-apps/tauri)
 - [NeteaseCloudMusicAPIEnhanced](https://github.com/neteasecloudmusicapienhanced/api-enhanced)
@@ -94,12 +108,12 @@ pnpm tbuild
 - [Fluent UI](https://github.com/microsoft/fluentui)
 - [shaders](https://github.com/paper-design/shaders)
 
-## 声明
+## ⚠️ 声明
 
 - 本项目为本人学习用的开源项目，仅供学习交流使用。
 - 项目中使用的音乐数据及 API 均来自第三方，版权归属于网易云音乐，**请勿用于任何商业用途**。
 
-## 开源协议
+## 📄 开源协议
 
 本项目基于 [MIT License](./LICENSE) 协议开源
 

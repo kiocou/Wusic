@@ -1,4 +1,3 @@
-// const BASE_URL = "https://api.yeemusic.top";
 const BASE_URL = "http://101.37.83.226:3000";
 
 interface RequestOptions extends RequestInit {
