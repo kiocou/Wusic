@@ -13,6 +13,7 @@ export function AlbumActions({ type, data }: ActionProps) {
   return (
     <>
       <ContextMenuButton
+        id="album-info"
         icon={<Album24Regular className="size-4" />}
         content="查看专辑"
         onClick={(e) => {

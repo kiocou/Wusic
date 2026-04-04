@@ -38,8 +38,8 @@ export function SongListItem({
   return (
     <div
       className={cn(
-        "flex-1 flex flex-col hover:bg-foreground/5 rounded-md",
-        index % 2 === 0 && "bg-foreground/2",
+        "flex-1 flex flex-col hover:bg-foreground/8 rounded-md",
+        index % 2 === 0 && "bg-foreground/5",
         "transition-colors duration-300",
       )}
       onDoubleClick={() => playSong(song)}

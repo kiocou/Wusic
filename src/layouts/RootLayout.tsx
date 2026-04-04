@@ -41,12 +41,17 @@ export default function RootLayout() {
                 <div className="W-full flex flex-col">
                   <Outlet />
                 </div>
+
+                <Toaster
+                  containerAriaLabel="Notifications"
+                  className="absolute"
+                  style={{ position: "absolute" }}
+                />
               </main>
             </div>
           </div>
         </SidebarProvider>
       </TitlebarProvider>
-      <Toaster />
       <GlobalContextMenu />
       <div className="w-full z-40">
         <PlayerBar />

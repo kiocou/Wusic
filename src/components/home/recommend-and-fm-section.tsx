@@ -10,7 +10,7 @@ import {
   sfPlayFill,
   sfPauseFill,
   sfAntennaRadiowavesLeftAndRight,
-  sf3Calendar,
+  sfCalendar,
 } from "@bradleyhodges/sfsymbols";
 import { YeeButton } from "../yee-button";
 import { useNavigate } from "react-router-dom";
@@ -101,8 +101,8 @@ function RecommendCard() {
       </div>
 
       <div className="relative z-10 w-full h-full p-6 flex flex-col justify-between">
-        <span className="text-lg font-bold drop-shadow-lg flex items-center gap-2">
-          <SFIcon icon={sf3Calendar} className="size-5 text-white/80" />
+        <span className="text-md font-medium drop-shadow-lg flex items-center gap-2">
+          <SFIcon icon={sfCalendar} className="size-4 text-white/80" />
           每日推荐
         </span>
 
@@ -176,10 +176,10 @@ function FmCard() {
 
       <div className="w-full h-full flex justify-between p-6 relative z-10">
         <div className="flex flex-col justify-between">
-          <span className="text-lg font-bold drop-shadow-lg flex items-center gap-2">
+          <span className="text-md font-medium drop-shadow-lg flex items-center gap-2">
             <SFIcon
               icon={sfAntennaRadiowavesLeftAndRight}
-              className="size-5 text-white/80"
+              className="size-4 text-white/80"
             />
             私人漫游
           </span>

@@ -1,3 +1,4 @@
+mod download;
 mod smtc;
 mod thumbbar;
 
@@ -101,11 +102,17 @@ pub fn run() {
             }
             _ => {}
         })
+        .manage(download::new_registry())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             greet,
             smtc::smtc_update_metadata,
-            smtc::smtc_update_playback
+            smtc::smtc_update_playback,
+            download::get_default_download_dir,
+            download::ensure_dir_exists,
+            download::download_song,
+            download::pause_download,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

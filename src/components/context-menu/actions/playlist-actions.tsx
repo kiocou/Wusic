@@ -13,6 +13,7 @@ export function PlaylistActions({ type, data }: ActionProps) {
   return (
     <>
       <ContextMenuButton
+        id="playlist-info"
         icon={<Album24Regular className="size-4" />}
         content="查看歌单"
         onClick={(e) => {

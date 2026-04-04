@@ -10,6 +10,7 @@ import {
 } from "../context-menu-button";
 import {
   Album24Regular,
+  ArrowDownload24Regular,
   Collections24Regular,
   Delete24Regular,
   Person24Regular,
@@ -17,6 +18,8 @@ import {
   TextBulletListAdd24Regular,
 } from "@fluentui/react-icons";
 import { Resource, Song } from "@/lib/types";
+import { SONG_QUALITY } from "@/lib/constants/song";
+import { useDownloadStore } from "@/lib/store/downloadStore";
 
 export function SongActions({ type, data }: ActionProps) {
   const { closeMenu } = useContextMenuStore();
@@ -50,10 +53,18 @@ export function SongActions({ type, data }: ActionProps) {
     (isFavPlaylist ||
       createdPlaylists.some((pl) => pl.id.toString() === playlistId));
 
+  const startDownload = useDownloadStore((s) => s.startDownload);
+  const downloadedSongs = useDownloadStore((s) => s.downloadedSongs);
+
+  const isDownloaded = downloadedSongs.some(
+    (item) => item.song.id === (data as Song).id,
+  );
+
   return (
     <>
       {(!currentSong || currentSong?.id !== (data as Song).id) && (
         <ContextMenuButton
+          id="play-music"
           icon={<Play24Filled className="size-4" />}
           content="播放"
           onClick={() => {
@@ -68,6 +79,7 @@ export function SongActions({ type, data }: ActionProps) {
       } as Song) && (
         <>
           <ContextMenuButton
+            id="add-to-playlist"
             icon={<TextBulletListAdd24Regular className="size-4" />}
             content="加入播放列表"
             onClick={async () => {
@@ -80,14 +92,15 @@ export function SongActions({ type, data }: ActionProps) {
       )}
 
       <ContextMenuButton
+        id="collect-music"
         icon={<Collections24Regular className="size-4" />}
         content="收藏"
         hasSubmenu={true}
       >
         {playlistList.map((playlist) => (
           <ContextMenuButton
+            id={`collect-music-${playlist.id}`}
             key={playlist.id}
-            icon={<Collections24Regular className="size-4" />}
             content={playlist.name}
             onClick={() => {
               closeMenu();
@@ -97,7 +110,34 @@ export function SongActions({ type, data }: ActionProps) {
         ))}
       </ContextMenuButton>
 
+      {!isDownloaded && (
+        <ContextMenuButton
+          id="download-music"
+          icon={<ArrowDownload24Regular className="size-4" />}
+          content="下载"
+          hasSubmenu={true}
+        >
+          {Object.entries(SONG_QUALITY)
+            .filter(
+              ([key]) => key !== "unlock" && (data as Song)[key as keyof Song],
+            )
+            .sort(([, a], [, b]) => a.weight - b.weight)
+            .map(([, q]) => (
+              <ContextMenuButton
+                id={`download-music-${q.level}`}
+                key={q.level}
+                content={q.desc}
+                onClick={() => {
+                  closeMenu();
+                  startDownload(data as Song, q.level);
+                }}
+              />
+            ))}
+        </ContextMenuButton>
+      )}
+
       <ContextMenuButton
+        id="artist-info"
         icon={<Person24Regular className="size-4" />}
         content={`歌手：${(data as Song).ar?.[0]?.name || (data as Resource).resourceExtInfo.artists?.[0]?.name}`}
         onClick={() => {
@@ -110,6 +150,7 @@ export function SongActions({ type, data }: ActionProps) {
 
       {(data as Song).al && (
         <ContextMenuButton
+          id="album-info"
           icon={<Album24Regular className="size-4" />}
           content={`专辑：${(data as Song).al?.name}`}
           onClick={() => {
@@ -121,6 +162,7 @@ export function SongActions({ type, data }: ActionProps) {
 
       {isMyPalylistPage && (
         <ContextMenuButton
+          id="remove-from-playlist"
           icon={<Delete24Regular className="size-4" />}
           content={`从歌单中移除`}
           onClick={() => {

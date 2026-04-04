@@ -1,7 +1,9 @@
 import { ChevronRight24Regular } from "@fluentui/react-icons";
 import React, { useEffect, useRef, useState } from "react";
+import { MenuRegistrationContext } from "./global-context-menu";
 
 interface ContextMenuButtonProps {
+  id: string;
   content?: string;
   icon?: React.ReactNode;
   onClick?: (e: React.MouseEvent) => void;
@@ -14,17 +16,32 @@ export function ContextMenuSeperator() {
 }
 
 export function ContextMenuButton({
+  id,
   content,
   icon,
   onClick,
   hasSubmenu,
   children,
 }: ContextMenuButtonProps) {
-  const [showSubmenu, setShowSubmenu] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { activeSubmenuId, setActiveSubmenuId, timeoutRef } = React.useContext(
+    MenuRegistrationContext,
+  );
   const subMenuRef = useRef<HTMLDivElement>(null);
   const [positionClass, setPositionClass] = useState("left-full pl-1");
   const [topOffset, setTopOffset] = useState("0px");
+
+  const showSubmenu = activeSubmenuId === id;
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setActiveSubmenuId(id);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setActiveSubmenuId(null);
+    }, 200);
+  };
 
   useEffect(() => {
     if (showSubmenu && subMenuRef.current) {
@@ -56,18 +73,8 @@ export function ContextMenuButton({
     <div
       className="flex gap-2 p-2 items-center text-sm hover:bg-foreground/5 rounded-md cursor-pointer relative"
       onClick={onClick}
-      onMouseEnter={() => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-          timeoutRef.current = null;
-        }
-        setShowSubmenu(true);
-      }}
-      onMouseLeave={() => {
-        timeoutRef.current = setTimeout(() => {
-          setShowSubmenu(false);
-        }, 500);
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="size flex items-center justify-center">{icon}</div>
       <span className="line-clamp-1">{content}</span>
@@ -81,12 +88,30 @@ export function ContextMenuButton({
           className={`absolute z-99999 cursor-default ${positionClass}`}
           style={{ top: topOffset }}
           onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          }}
+          onMouseLeave={handleMouseLeave}
         >
-          <div className="w-48 bg-card backdrop-blur-md border border-border rounded-lg shadow-lg flex flex-col p-2 max-h-[300px] overflow-y-auto">
-            {children}
-          </div>
+          <IsolatedSubmenu>
+            <div className="w-48 bg-card backdrop-blur-md border border-border rounded-lg shadow-lg flex flex-col p-2 max-h-[300px] overflow-y-auto">
+              {children}
+            </div>
+          </IsolatedSubmenu>
         </div>
       )}
     </div>
+  );
+}
+
+function IsolatedSubmenu({ children }: { children: React.ReactNode }) {
+  const { timeoutRef } = React.useContext(MenuRegistrationContext);
+  const [activeSubmenuId, setActiveSubmenuId] = useState<string | null>(null);
+  return (
+    <MenuRegistrationContext.Provider
+      value={{ activeSubmenuId, setActiveSubmenuId, timeoutRef }}
+    >
+      {children}
+    </MenuRegistrationContext.Provider>
   );
 }

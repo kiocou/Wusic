@@ -72,6 +72,41 @@ interface UnblockMusicResponse {
   proxyUrl: string;
 }
 
+interface DownloadMusicResponse {
+  code: number;
+  data: {
+    id: number;
+    url: string;
+    size: number;
+    br: number;
+    md5: string;
+    code: number;
+    expi: number;
+    type: string;
+    gain: number;
+    peak: number;
+    closedGain: number;
+    closedPeak: number;
+    fee: number;
+    uf: number;
+    payed: number;
+    canExtend: boolean;
+    level: string;
+    encodeType: string;
+    freeTrialPrivilege: {
+      resConsumable: boolean;
+      userConsumable: boolean;
+    };
+    freeTimeTrialPrivilege: {
+      resConsumable: boolean;
+      userConsumable: boolean;
+    };
+    time: number;
+    musicId: string;
+    sr: number;
+  };
+}
+
 export async function getSongDetail(ids: string[] | number[]): Promise<Song[]> {
   if (!ids || ids.length === 0) return [];
 
@@ -169,4 +204,17 @@ export async function unblockMusic(id: string | number, signal?: AbortSignal) {
     },
     { signal },
   );
+}
+
+// 获取客户端歌曲下载链接 - 新版
+// 使用 /song/url/v1 接口获取的是歌曲试听 url, 非 VIP 账号最高只能获取 极高 音质，但免费类型的歌曲(fee == 0)使用本接口可最高获取Hi-Res音质的 url。
+export async function downloadMusic(id: number | string, level: string) {
+  const res = await api.get<DownloadMusicResponse>("/song/download/url/v1", {
+    id: id.toString(),
+    level,
+  });
+
+  if (res.code !== 200) return null;
+
+  return res.data;
 }

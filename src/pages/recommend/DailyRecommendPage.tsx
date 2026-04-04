@@ -25,12 +25,19 @@ export function DailyRecommendPage() {
 
   return (
     <div className="w-full h-full px-8 py-8 flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
-        <p className="text-3xl font-bold">
+      <div className="flex flex-col gap-6">
+        <p
+          className="text-3xl font-bold tracking-tighter drop-shadow-lg"
+          style={{ fontFamily: "寒蝉锦书宋" }}
+        >
           {month} 月 {day} 日，
         </p>
         <p className="text-lg font-medium text-foreground/60">
-          从{songs[0]?.ar?.[0]?.name}的《{songs[0]?.name}》开始
+          从{songs[0]?.ar?.[0]?.name}的
+          <span style={{ fontFamily: "寒蝉锦书宋" }} className="font-semibold">
+            《{songs[0]?.name}》
+          </span>
+          开始。
         </p>
       </div>
 

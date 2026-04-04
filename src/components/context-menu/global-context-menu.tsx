@@ -1,12 +1,25 @@
 import { useContextMenuStore } from "@/lib/store/contextMenuStore";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SongActions } from "./actions/song-actions";
 import { AlbumActions } from "./actions/album-actions";
 import { PlaylistActions } from "./actions/playlist-actions";
+
+export const MenuRegistrationContext = React.createContext<{
+  activeSubmenuId: string | null;
+  setActiveSubmenuId: (id: string | null) => void;
+  timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+}>({
+  activeSubmenuId: null,
+  setActiveSubmenuId: () => {},
+  timeoutRef: { current: null },
+});
+
 export function GlobalContextMenu() {
   const { isOpen, x, y, type, data, closeMenu } = useContextMenuStore();
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: 0, top: 0 });
+  const [activeSubmenuId, setActiveSubmenuId] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,6 +51,13 @@ export function GlobalContextMenu() {
     }
   }, [isOpen, x, y]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setActiveSubmenuId(null);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -52,9 +72,13 @@ export function GlobalContextMenu() {
       }}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <SongActions type={type!} data={data} />
-      <AlbumActions type={type!} data={data} />
-      <PlaylistActions type={type!} data={data} />
+      <MenuRegistrationContext.Provider
+        value={{ activeSubmenuId, setActiveSubmenuId, timeoutRef }}
+      >
+        <SongActions type={type!} data={data} />
+        <AlbumActions type={type!} data={data} />
+        <PlaylistActions type={type!} data={data} />
+      </MenuRegistrationContext.Provider>
     </div>
   );
 }

@@ -44,6 +44,8 @@ import {
   ArrowDownload24Filled,
   Folder24Regular,
   Folder24Filled,
+  PersonEdit24Regular,
+  Ribbon24Regular,
 } from "@fluentui/react-icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -320,13 +322,18 @@ export function AppSidebar() {
 
                   {!!user && (
                     <>
+                      <DropdownMenuItem>
+                        <Ribbon24Regular />
+                        我的会员
+                      </DropdownMenuItem>
+
                       <DropdownMenuItem
                         onClick={() => {
                           navigate("/profile");
                         }}
                       >
-                        <Person24Regular />
-                        个人信息
+                        <PersonEdit24Regular />
+                        编辑个人信息
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
