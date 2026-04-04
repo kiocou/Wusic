@@ -73,6 +73,10 @@ function RecommendCard() {
     fetchData();
   }, []);
 
+  const date = new Date();
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+
   return (
     <div
       className="w-full h-full bg-(--dynamic-color) rounded-xl overflow-hidden relative text-white drop-shadow-2xl cursor-pointer"
@@ -101,7 +105,7 @@ function RecommendCard() {
 
         <div className="flex flex-col gap-2">
           <span className="text-white text-lg drop-shadow-md font-medium">
-            4 月 3 日，从《{songs[0]?.name}》听起
+            {month} 月 {day} 日，从《{songs[0]?.name}》听起
           </span>
           <Button
             className="w-24 bg-(--dynamic-color) border-b-(--light-vibrant) border-b-2 drop-shadow-lg font-light cursor-pointer transition-all duration-300 hover:brightness-110 hover:shadow-xl"
@@ -138,7 +142,7 @@ function FmCard() {
     }
   }, []);
   useEffect(() => {
-    const url = currentFmSong?.album?.picUrl;
+    const url = currentFmSong?.al?.picUrl;
     if (url) {
       if (fmColorCache[url]) {
         setBgColor(fmColorCache[url]);
@@ -183,7 +187,7 @@ function FmCard() {
                 {currentFmSong?.name}
               </span>{" "}
               <span className="text-md opacity-70 line-clamp-1 max-w-58 font-light tracking-wide">
-                {currentFmSong?.artists?.map((ar) => ar.name).join(" / ")}
+                {currentFmSong?.ar?.map((ar) => ar.name).join(" / ")}
               </span>
             </div>
 
@@ -193,6 +197,7 @@ function FmCard() {
                 className="hover:bg-transparent hover:text-white text-white/80"
                 icon={<SFIcon icon={sfHeartSlashFill} className="size-6" />}
                 onClick={() => {
+                  if (!currentFmSong) return;
                   trashFmSong();
                 }}
               />
@@ -226,9 +231,9 @@ function FmCard() {
         </div>
 
         <div className="flex items-center">
-          {currentFmSong?.album?.picUrl && (
+          {currentFmSong?.al?.picUrl && (
             <img
-              src={currentFmSong?.album?.picUrl}
+              src={currentFmSong.al.picUrl}
               className="h-full rounded-[12px] object-cover shadow-2xl"
             />
           )}

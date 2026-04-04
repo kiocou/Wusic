@@ -10,12 +10,12 @@ export function initMediaSession() {
       if (!currentSong) return;
       // 先设置元数据（duration 会在 onPlay 后通过 playback 更新）
       invoke("smtc_update_metadata", {
-        title: currentSong.name,
-        artist: currentSong.ar.map((a) => a.name).join("、"),
-        album: currentSong.al.name,
-        coverUrl: `${currentSong.al?.picUrl}?param=512y512`,
+        title: currentSong.name || "",
+        artist: currentSong.ar?.map((a) => a.name).join("、") || "",
+        album: currentSong.al?.name || "",
+        coverUrl: currentSong.al?.picUrl ? `${currentSong.al.picUrl}?param=512y512` : "",
         durationSecs: 0,
-      });
+      }).catch((e) => console.error("Update SMTC Info Failed:", e));
     },
   );
 

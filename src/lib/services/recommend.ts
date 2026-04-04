@@ -1,5 +1,6 @@
 import { api } from "../api";
 import { Song } from "../types";
+import { getSongDetail } from "./song";
 
 interface DailyRecommendResponse {
   code: number;
@@ -47,7 +48,9 @@ export async function getPersonalFm() {
 
   if (res.code !== 200) return [];
 
-  return res.data.map((s) => ({ ...s, ar: s.artists || s.ar || [] }));
+  const ids = res.data.map((s) => s.id);
+  const songs = await getSongDetail(ids);
+  return songs;
 }
 
 export async function fmTrash(id: string | number) {

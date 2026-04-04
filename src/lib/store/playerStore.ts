@@ -23,7 +23,6 @@ export const usePlayerStore = create<SharedPlayerState>()(
         partialize: (state) => ({
           currentSong: state.currentSong,
           currentIndexInPlaylist: state.currentIndexInPlaylist,
-          // playlist: state.playlist,
           volume: state.volume,
           currentMusicLevel: state.currentMusicLevel,
           preferMusicLevel: state.preferMusicLevel,

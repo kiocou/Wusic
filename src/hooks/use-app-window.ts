@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import type { Window } from "@tauri-apps/api/window";
 
+let wasMaximizedBeforeFullscreen = false;
+
 export function useAppWindow() {
   const [appWindow, setAppWindow] = useState<Window | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -43,7 +45,27 @@ export function useAppWindow() {
   const toggleFullscreen = async () => {
     if (appWindow) {
       const current = await appWindow.isFullscreen();
-      await appWindow.setFullscreen(!current);
+      
+      if (!current) {
+        const isMax = await appWindow.isMaximized();
+        if (isMax) {
+          wasMaximizedBeforeFullscreen = true;
+          await appWindow.unmaximize();
+          // Give the OS a tiny fraction of time to process the unmaximize
+          // before applying fullscreen, to reliably bypass the Windows 11 taskbar bug.
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } else {
+          wasMaximizedBeforeFullscreen = false;
+        }
+        await appWindow.setFullscreen(true);
+      } else {
+        await appWindow.setFullscreen(false);
+        if (wasMaximizedBeforeFullscreen) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          await appWindow.maximize();
+          wasMaximizedBeforeFullscreen = false;
+        }
+      }
     }
   };
 
