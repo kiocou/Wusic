@@ -111,7 +111,7 @@ function RecommendCard() {
             {month} 月 {day} 日，从《{songs[0]?.name}》听起
           </span>
           <Button
-            className="w-24 bg-(--dynamic-color) border-b-(--light-vibrant) border-b-2 drop-shadow-lg font-light cursor-pointer transition-all duration-300 hover:brightness-110 hover:shadow-xl"
+            className="w-24 bg-(--dynamic-color) border-b-(--light-vibrant) border-b-2 drop-shadow-lg font-light cursor-pointer transition-all duration-300 hover:brightness-110 hover:shadow-xl text-white"
             onClick={() => playQueue(songs)}
           >
             立即播放
@@ -197,7 +197,7 @@ function FmCard() {
             <div className="flex gap-4 items-center">
               <YeeButton
                 variant="ghost"
-                className="hover:bg-transparent hover:text-white text-white/80"
+                className="hover:bg-transparent! hover:text-white text-white/80"
                 icon={<SFIcon icon={sfHeartSlashFill} className="size-6" />}
                 onClick={() => {
                   if (!currentFmSong) return;
@@ -206,7 +206,7 @@ function FmCard() {
               />
               <YeeButton
                 variant="ghost"
-                className="hover:bg-transparent hover:text-white text-white/80"
+                className="hover:bg-transparent! hover:text-white text-white/80"
                 icon={
                   <SFIcon
                     icon={isPlayingFm ? sfPauseFill : sfPlayFill}
@@ -223,7 +223,7 @@ function FmCard() {
               />
               <YeeButton
                 variant="ghost"
-                className="hover:bg-transparent hover:text-white text-white/80"
+                className="hover:bg-transparent! hover:text-white text-white/80"
                 icon={<SFIcon icon={sfForwardEndFill} className="size-5" />}
                 onClick={() => {
                   nextFmSong();
