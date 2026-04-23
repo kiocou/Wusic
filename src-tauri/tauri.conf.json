@@ -1,18 +1,19 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Yee Music",
+  "productName": "Wusic",
   "version": "0.3.1",
-  "identifier": "com.isen.yee-music",
+  "identifier": "com.kiocou.wusic",
   "build": {
-    "beforeDevCommand": "pnpm dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Yee Music",
+        "title": "Wusic",
         "width": 1440,
         "height": 900,
         "resizable": false,
@@ -22,7 +23,7 @@
         "windowEffects": {
           "effects": ["acrylic", "mica"]
         },
-        "additionalBrowserArgs": "--disk-cache-size=104857600 --js-flags='--max-old-space-size=2048'"
+        "additionalBrowserArgs": "--disk-cache-size=104857600 --js-flags=--max-old-space-size=2048 --enable-gpu-rasterization --enable-zero-copy --enable-hardware-overlays=single-fullscreen,single-on-top,underlay --enable-features=VaapiVideoDecoder,VaapiVideoEncoder,AngleGLES,UseSkiaRenderer --ignore-gpu-blocklist --enable-gpu --disable-backgrounding-occluded-windows --disable-renderer-backgrounding"
       }
     ],
     "security": {
@@ -52,7 +53,7 @@
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU5MTJFQjhERTYwNkZENDEKUldSQi9RYm1qZXNTNlVzUHBidEhhcDhuS2xFNExocTk0Y0Fldk1lb1RlaGlQNHB0S2VxVnVsaUcK",
       "active": true,
       "endpoints": [
-        "https://github.com/1sen3/YeeMusicTauri/releases/download/updater/update.json"
+        "https://github.com/kiocou/Wusic/releases/download/updater/update.json"
       ]
     }
   }

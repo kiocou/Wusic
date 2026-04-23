@@ -66,7 +66,7 @@ export default function Page() {
       {isLoading ? (
         <Loading />
       ) : (
-        <div className="w-full min-h-full h-full px-8 py-8 flex flex-col gap-12">
+        <div className="w-full min-h-full flex-1 px-8 py-8 flex flex-col gap-12">
           <RecommendAndFMSection />
 
           {recentListenList && (

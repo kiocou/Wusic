@@ -4,7 +4,6 @@ import {
   getSongLyric,
   getSongMusicDetail,
   getSongUrl,
-  unblockMusic,
 } from "@/lib/services/song";
 import {
   needsDowngrade,
@@ -20,6 +19,7 @@ import { REPEAT_MODE_CONFIG } from "@/lib/constants/player";
 import { Song } from "@/lib/types";
 import { fmTrash, getPersonalFm } from "@/lib/services/recommend";
 import { useSettingStore } from "../settingStore";
+import { resolveAudioUrl } from "@/lib/services/musicSources";
 
 let currentPlayAbortController: AbortController | null = null;
 
@@ -100,15 +100,16 @@ export const createPlayerControlSlice: StateCreator<
       }
 
       if (!url) {
-        // 尝试解锁灰色歌曲，或弥补普通请求失败的歌曲
+        // 多音源回退链：依次尝试后端解锁接口、酷狗、酷我、咪咕、B站
         try {
-          const unblockRes = await unblockMusic(song.id, signal);
-          url = unblockRes?.data;
-          if (url) {
+          const fallback = await resolveAudioUrl(song, signal);
+          if (fallback?.url) {
+            url = fallback.url;
             set({ currentMusicLevelKey: "unlock" });
+            console.log(`[音源回退] 成功来源: ${fallback.source}`);
           }
         } catch (e) {
-          console.error("尝试解锁歌曲出错", e);
+          console.error("多音源回退失败", e);
         }
       }
 

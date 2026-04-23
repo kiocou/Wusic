@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Play24Filled } from "@fluentui/react-icons";
 import { useEffect, useState } from "react";
 
-export function DailyRecommendPage() {
+export default function DailyRecommendPage() {
   const date = Date.now();
   const day = new Date(date).getDate();
   const month = new Date(date).getMonth() + 1;

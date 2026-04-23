@@ -102,7 +102,7 @@ function YeeSlider({
                 className="bg-card text-foreground drop-shadow-md"
                 sideOffset={10}
               >
-                <p>{tooltip || value}</p>
+                <p>{tooltip ?? (Array.isArray(value) ? value[0] : value)}</p>
               </TooltipContent>
             </Tooltip>
           ))}

@@ -1,7 +1,7 @@
 <div align="center">
-  <h1>Yee Music</h1>
+  <h1>Wusic</h1>
 
-  <img width="128" height="128" alt="Yee Music" src="./src-tauri/icons/icon.png">
+  <img width="128" height="128" alt="Wusic" src="./src-tauri/icons/icon.png">
 </div>
 
 <div align="center">
@@ -10,8 +10,8 @@
 </div>
 
 <div align="center">
-    <a href="https://github.com/1sen3/YeeMusic/releases">
-        <img src="https://img.shields.io/github/v/release/1sen3/YeeMusic?color=369eff&label=Version" alt="Version">
+    <a href="https://github.com/kiocou/Wusic/releases">
+        <img src="https://img.shields.io/github/v/release/kiocou/Wusic?color=369eff&label=Version" alt="Version">
       </a>
   <img src="https://img.shields.io/badge/Framework-Tauri-FFC131" alt="Framework: Tauri">
   <img src="https://img.shields.io/badge/Platform-Windows-blue" alt="Platform: Windows">
@@ -46,10 +46,10 @@
 - 支持调节流体渐变背景的变形强度与漩涡效果
 - 支持全局界面与独立歌词字体配置
 - 集成歌词翻译以及罗马音歌词
+- 歌曲下载管理
 
 ## 📅 更新计划
 
-- [x] 歌曲下载管理
 - [ ] 音乐网盘
 - [ ] 歌曲评论区
 - [ ] 本地音乐播放支持
@@ -69,8 +69,8 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/1sen3/YeeMusic.git
-cd yee-music
+git clone https://github.com/kiocou/Wusic.git
+cd Wusic
 
 # 2. 安装依赖
 pnpm install

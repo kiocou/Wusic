@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { useMicroInteraction } from "@/hooks/use-micro-interaction";
 
 interface PlayerBarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "outline" | "ghost";
@@ -24,11 +25,12 @@ export const YeeButton = React.forwardRef<
   HTMLButtonElement,
   PlayerBarButtonProps
 >(({ variant = "ghost", icon, disabled, className, ...props }, ref) => {
+  const micro = useMicroInteraction(disabled);
+
   return (
     <motion.div
-      whileTap={!disabled ? { scale: 0.85 } : {}}
-      whileHover={!disabled ? { scale: 1.1 } : {}}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      {...micro}
+      className="transform-gpu will-change-transform"
     >
       <Button
         ref={ref}

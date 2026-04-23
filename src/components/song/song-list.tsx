@@ -1,6 +1,8 @@
 import { Song } from "@/lib/types";
 import { SongListItem } from "./song-list-item";
 import { Virtuoso } from "react-virtuoso";
+import { motion } from "framer-motion";
+import { staggerItem } from "@/styles/animations";
 
 export function SongList({
   songList,
@@ -19,14 +21,20 @@ export function SongList({
       }
       data={songList}
       itemContent={(index, song) => (
-        <div className="pb-4">
+        <motion.div
+          custom={index}
+          variants={staggerItem}
+          initial="hidden"
+          animate="show"
+          className="pb-4 transform-gpu will-change-transform"
+        >
           <SongListItem
             song={song}
             index={index}
             showCover={showCover}
             showAlbum={showAlbum}
           />
-        </div>
+        </motion.div>
       )}
     />
   );

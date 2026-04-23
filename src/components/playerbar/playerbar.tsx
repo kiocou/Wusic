@@ -7,6 +7,7 @@ import {
   Play24Filled,
   Previous24Filled,
   SlideSize24Regular,
+  Resize24Regular,
 } from "@fluentui/react-icons";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { GetThumbnail, cn } from "@/lib/utils";
@@ -29,21 +30,27 @@ import { PlayerBarVolumePopover } from "./player-bar-volume-popover";
 import { PlayerBarSlider } from "./playerbar-slider";
 import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 import { useSongLogic } from "@/hooks/use-song-logic";
+import { AnimatedArtwork } from "@/pages/player/AnimatedArtwork";
+import { PLAYER_LAYOUT_IDS, springShared } from "@/styles/animations";
+import { LayoutGroup, motion } from "framer-motion";
+import { useMiniMode } from "@/hooks/useMiniMode";
 
 export function PlayerBar() {
   return (
-    <div
-      className="w-full h-20 grid grid-cols-3 relative bg-card/60 border-t"
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <LeftButtonRegion />
+    <LayoutGroup id="yee-playback-shared-transition">
+      <div
+        className="w-full h-20 grid grid-cols-3 relative bg-card/60 border-t"
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <LeftButtonRegion />
 
-      <CenterButtonRegion />
+        <CenterButtonRegion />
 
-      <RightButtonRegion />
+        <RightButtonRegion />
 
-      <PlayerBarSlider />
-    </div>
+        <PlayerBarSlider />
+      </div>
+    </LayoutGroup>
   );
 }
 
@@ -59,27 +66,39 @@ function LeftButtonRegion() {
       {currentSong ? (
         <>
           <LyricSheet>
-            <div className="shrink-0 relative group cursor-pointer">
-              <div className="w-12 h-12 rounded-sm overflow-hidden relative border shadow-sm">
-                <img
-                  src={GetThumbnail(
-                    currentSong.al?.picUrl || currentSong.album?.picUrl || "",
-                  )}
-                  alt="Album cover"
-                  loading="eager"
-                  className="w-12 h-12 group-hover:brightness-50 transform transition-all duration-300 ease-in-out"
-                />
-              </div>
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={springShared}
+              className="shrink-0 relative group cursor-pointer transform-gpu will-change-transform"
+            >
+              <AnimatedArtwork
+                src={GetThumbnail(
+                  currentSong.al?.picUrl || currentSong.album?.picUrl || "",
+                )}
+                alt="Album cover"
+                layoutId={PLAYER_LAYOUT_IDS.artwork}
+                className="w-12 h-12 rounded-sm border shadow-sm"
+                imageClassName="group-hover:brightness-50 transition-all duration-300 ease-in-out"
+              />
               <SlideSize24Regular className="opacity-0 group-hover:opacity-100 size-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white  transform transition-all duration-300 ease-in-out" />
-            </div>
+            </motion.div>
           </LyricSheet>
 
-          <div>
-            <span className="text-sm line-clamp-1 font-semibold">
+          <div className="min-w-0">
+            <motion.span
+              layoutId={PLAYER_LAYOUT_IDS.title}
+              transition={springShared}
+              className="text-sm line-clamp-1 font-semibold transform-gpu will-change-transform"
+            >
               {currentSong?.name || ""}
-            </span>
+            </motion.span>
 
-            <div className="line-clamp-1">
+            <motion.div
+              layoutId={PLAYER_LAYOUT_IDS.artist}
+              transition={springShared}
+              className="line-clamp-1 transform-gpu will-change-transform"
+            >
               {currentSong?.ar?.map((ar, idx) => (
                 <Link
                   to={`/detail/artist?id=${ar.id}`}
@@ -90,7 +109,7 @@ function LeftButtonRegion() {
                   {idx < currentSong!.ar!.length - 1 && "、"}
                 </Link>
               ))}
-            </div>
+            </motion.div>
           </div>
 
           <div>
@@ -159,11 +178,17 @@ function CenterButtonRegion() {
           <Spinner className="size-5" />
         </div>
       ) : (
-        <YeeButton
-          variant="ghost"
-          onClick={() => togglePlay()}
-          icon={<PlayIcon className="size-5" />}
-        />
+        <motion.div
+          layoutId={PLAYER_LAYOUT_IDS.playToggle}
+          transition={springShared}
+          className="transform-gpu will-change-transform"
+        >
+          <YeeButton
+            variant="ghost"
+            onClick={() => togglePlay()}
+            icon={<PlayIcon className="size-5" />}
+          />
+        </motion.div>
       )}
 
       <YeeButton
@@ -197,6 +222,7 @@ function CenterButtonRegion() {
 function RightButtonRegion() {
   const openMenu = useContextMenuStore((s) => s.openMenu);
   const currentSong = usePlayerStore((s) => s.currentSong);
+  const { enterMiniMode } = useMiniMode();
 
   const isFmMode = usePlayerStore((s) => s.isFmMode);
 
@@ -207,6 +233,13 @@ function RightButtonRegion() {
       {!isFmMode && <PlaylistSheet />}
 
       <PlayerBarVolumePopover />
+
+      <YeeButton
+        variant="ghost"
+        onClick={() => enterMiniMode()}
+        icon={<Resize24Regular className="size-5" />}
+        title="进入 Mini 播放器"
+      />
 
       <YeeButton
         variant="ghost"

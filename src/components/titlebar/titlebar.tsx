@@ -99,14 +99,14 @@ export function Titlebar() {
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
               <img
                 src="/icons/logo.png"
-                alt="Yee Music Logo"
+                alt="Wusic Logo"
                 width={20}
                 height={20}
                 className="rounded-sm"
               />
             </div>
             <span className="truncate font-light text-sm text-foreground">
-              Yee Music
+              Wusic
             </span>
           </div>
         </motion.div>

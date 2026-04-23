@@ -23,8 +23,8 @@ pub fn init_smtc(app: &AppHandle) {
         }
     };
     let config = PlatformConfig {
-        dbus_name: "yee_music",
-        display_name: "Yee Music",
+        dbus_name: "wusic",
+        display_name: "Wusic",
         hwnd,
     };
     let mut controls = MediaControls::new(config).expect("Failed to create MediaControls");

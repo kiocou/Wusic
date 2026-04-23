@@ -16,8 +16,10 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import { smoothLinear, springShared } from "@/styles/animations";
 
 const LYRIC_CROLL_DELAY = 0.04;
+const LYRIC_FOCUS_RATIO = 0.42;
 
 const MASK_IMAGE =
   "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)";
@@ -90,6 +92,15 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
 
   const currentTimeMotion = useMotionValue(0);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  
+  // 使用 ref 缓存歌词数组和当前索引，避免闭包问题
+  const lyricRef = useRef(lyric);
+  const currentIndexRef = useRef(-1);
+  
+  // 同步歌词数组到 ref
+  useEffect(() => {
+    lyricRef.current = lyric;
+  }, [lyric]);
 
   useEffect(() => {
     const unsubscribe = usePlayerStore.subscribe(
@@ -97,20 +108,27 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
       (currentTime) => {
         currentTimeMotion.set(currentTime * 1000);
 
-        if (!lyric?.length) return;
+        const lyrics = lyricRef.current;
+        if (!lyrics?.length) return;
+        
         const currentTimeMs = currentTime * 1000;
         let newIndex = -1;
-        for (let i = lyric.length - 1; i >= 0; i--) {
-          if (lyric[i].lineStart <= currentTimeMs && lyric[i].lineStart >= 0) {
+        for (let i = lyrics.length - 1; i >= 0; i--) {
+          if (lyrics[i].lineStart <= currentTimeMs && lyrics[i].lineStart >= 0) {
             newIndex = i;
             break;
           }
         }
-        setCurrentIndex((prev) => (prev !== newIndex ? newIndex : prev));
+        
+        // 只在索引变化时更新状态
+        if (currentIndexRef.current !== newIndex) {
+          currentIndexRef.current = newIndex;
+          setCurrentIndex(newIndex);
+        }
       },
     );
     return unsubscribe;
-  }, [lyric, currentTimeMotion]);
+  }, [currentTimeMotion]);
 
   useEffect(() => {
     return () => {
@@ -137,7 +155,7 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
       const containerHeight = containerRef.current.clientHeight;
       const offset =
         targetElement.offsetTop -
-        containerHeight / 2 +
+        containerHeight * LYRIC_FOCUS_RATIO +
         targetElement.clientHeight / 2;
 
       const newTargetScrollY = -offset;
@@ -269,8 +287,13 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
             const isActive = idx === currentIndex;
             const shouldBlur = !blurDisabled && !isActive;
 
-            const dynamicOpacity = isActive ? 1 : 0.4;
-            const dynamicBlur = shouldBlur ? Math.min(6, distance * 1) : 0;
+            const dynamicOpacity = isActive
+              ? 1
+              : Math.max(0.18, 0.54 - distance * 0.055);
+            const dynamicBlur = shouldBlur ? Math.min(10, distance * 1.15) : 0;
+            const dynamicScale = isActive
+              ? 1
+              : Math.max(0.82, 1 - distance * 0.035);
 
             return (
               <SongLyricLine
@@ -288,6 +311,7 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
                 isActive={isActive}
                 opacity={dynamicOpacity}
                 blur={dynamicBlur}
+                scale={dynamicScale}
                 targetScrollY={currentScrollY}
                 isScrolling={isScrolling}
                 isLargeJump={isLargeJump}
@@ -401,6 +425,7 @@ export const SongLyricLine = forwardRef<
     isActive: boolean;
     opacity: number;
     blur: number;
+    scale: number;
     targetScrollY: number;
     isScrolling: boolean;
     isLargeJump: boolean;
@@ -420,6 +445,7 @@ export const SongLyricLine = forwardRef<
       isActive,
       opacity,
       blur,
+      scale,
       targetScrollY,
       isScrolling,
       isLargeJump,
@@ -495,10 +521,10 @@ export const SongLyricLine = forwardRef<
       return (
         <div
           ref={ref}
-          className="px-4 py-4 rounded-xl inline-block pointer-events-none"
+          className="px-4 py-5 rounded-xl inline-block pointer-events-none transform-gpu will-change-transform"
           style={{ transform: `translateY(${targetScrollY}px)`, opacity: 0 }}
         >
-          <span className="w-full text-3xl text-white mix-blend-plus-lighter inline-block font-medium tracking-tight">
+          <span className="w-full text-4xl text-white mix-blend-plus-lighter inline-block font-bold tracking-[-0.04em]">
             {hasWords
               ? lyricLine.words!.map((w, wIdx) => (
                   <span
@@ -534,22 +560,24 @@ export const SongLyricLine = forwardRef<
         ref={ref}
         animate={{ y: targetScrollY }}
         transition={{ layout: layoutTransition, y: yTransition }}
+        className="transform-gpu will-change-transform"
       >
         <motion.div
-          className="cursor-pointer hover:bg-white/5 px-4 py-4 rounded-xl inline-block transition-colors duration-300"
+          className="cursor-pointer hover:bg-white/5 px-4 py-5 rounded-xl inline-block transition-colors duration-300 transform-gpu will-change-transform"
           onClick={handleClick}
         >
           <motion.span
             initial={false}
-            className="w-full text-3xl text-white/60 mix-blend-plus-lighter inline-block font-medium tracking-tight"
+            className="w-full text-4xl text-white/60 mix-blend-plus-lighter inline-block font-bold tracking-[-0.04em] leading-[1.28] transform-gpu will-change-transform"
             animate={{
               filter: `blur(${blur}px)`,
               opacity,
+              scale,
               transformOrigin: "left center",
               willChange: "transform",
               y: !hasWords && isActive ? -4 : 0,
             }}
-            transition={{ type: "spring", stiffness: 100, damping: 20 }}
+            transition={springShared}
           >
             {hasWords
               ? lyricLine.words!.map((word, wordIdx) => (
@@ -567,7 +595,7 @@ export const SongLyricLine = forwardRef<
               layout="position"
               initial={{ opacity: 0 }}
               animate={{ opacity }}
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
+              transition={smoothLinear}
               className="w-full text-2xl mix-blend-plus-lighter inline-block font-medium tracking-tight mt-4"
               style={{
                 color: "rgba(255, 255, 255, 0.4)",
@@ -583,7 +611,7 @@ export const SongLyricLine = forwardRef<
               layout="position"
               initial={{ opacity: 0 }}
               animate={{ opacity }}
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
+              transition={smoothLinear}
               className="w-full text-2xl mix-blend-plus-lighter inline-block font-medium tracking-tight mt-4"
               style={{
                 color: "rgba(255, 255, 255, 0.4)",
@@ -608,60 +636,36 @@ const VerbatimWord = React.memo(function VerbatimWord({
   word: LyricWord;
   currentTimeMotion: MotionValue<number>;
 }) {
-  const emphasisFactor = React.useMemo(() => {
-    const duration = word.duration;
-    const text = word.char.trim();
-    const isChinese = /[\u4e00-\u9fa5]/.test(text);
+  const endTime = word.startTime + word.duration;
 
-    if (isChinese) {
-      return Math.min(Math.max(duration - 1000, 0) / 200, 1);
-    } else {
-      const isValidLength = text.length >= 1 && text.length <= 7;
-      if (!isValidLength) return 0;
-      return Math.min(Math.max(duration - 1000, 0) / 200, 1);
-    }
-  }, [word]);
-
+  // 优化：直接使用 useTransform 计算进度
   const rawProgress = useTransform(
     currentTimeMotion,
-    [word.startTime, word.startTime + word.duration],
+    [word.startTime, endTime],
     [0, 1],
   );
 
-  const progress = useSpring(rawProgress, {
-    stiffness: 150,
-    damping: 24,
-    mass: 0.8,
+  // 简化的渐变计算
+  const gradientPct = useTransform(rawProgress, (p) => `${(1 - p) * 100}%`);
+  
+  // 简化的辉光因子计算
+  const glowFactor = useTransform(rawProgress, (p) => {
+    // 在进度 0.25-0.7 之间辉光最强
+    if (p <= 0.25) return p / 0.25;
+    if (p >= 0.7) return Math.max(0, 1 - (p - 0.7) / 0.3);
+    return 1;
   });
-  const gradientPct = useTransform(progress, (p) => `${(1 - p) * 100}%`);
-  const translateY = useTransform(progress, [0, 1], ["0px", "-2.4px"]);
-
-  // const scale = useTransform(
-  //   progress,
-  //   [0, 0.25, 0.7, 1],
-  //   [1, 1 + 0.04 * emphasisFactor, 1 + 0.02 * emphasisFactor, 1],
-  // );
-
-  const brightness = useTransform(progress, [0, 0.5, 1], [0, 0.8, 0.6]);
+  
+  // 使用简化的渐变和辉光
   const backgroundImage = useMotionTemplate`linear-gradient(100deg,
-      rgba(255,255,255,0.8) 0%,
-      rgba(255,255,255,${brightness}) calc(100% - ${gradientPct}),
-      rgba(255,255,255,0) calc(100% - ${gradientPct} + 15%),
+      rgba(255,255,255,0.85) 0%,
+      rgba(255,255,255,0.55) calc(100% - ${gradientPct}),
+      rgba(255,255,255,0) calc(100% - ${gradientPct} + 12%),
       rgba(255,255,255,0) 100%
     )`;
-
-  const baseGlow = useTransform(progress, [0, 0.25, 0.7, 1], [0, 1, 0.4, 0]);
-
-  const glowBlur = useTransform(baseGlow, [0, 1], [0, 30 * emphasisFactor]);
-  const glowOpacity = useTransform(baseGlow, [0, 1], [0, 0.6 * emphasisFactor]);
-
-  const coreBlur = useTransform(baseGlow, [0, 1], [0, 8 * emphasisFactor]);
-  const coreOpacity = useTransform(baseGlow, [0, 1], [0, 1.0 * emphasisFactor]);
-
-  const textShadow = useMotionTemplate`
-      0 0 ${coreBlur}px rgba(255, 255, 255, ${coreOpacity}),
-      0 0 ${glowBlur}px rgba(255, 255, 255, ${glowOpacity})
-    `;
+    
+  // 简化的文本阴影
+  const textShadow = useMotionTemplate`0 0 ${glowFactor}px rgba(255,255,255,${glowFactor})`;
 
   return (
     <motion.span
@@ -673,10 +677,8 @@ const VerbatimWord = React.memo(function VerbatimWord({
         WebkitTextFillColor: "rgba(255,255,255,0.4)",
         WebkitBackgroundClip: "text",
         backgroundClip: "text",
-        y: translateY,
-        willChange: "transform",
+        willChange: "transform, opacity",
         fontWeight: "500",
-        // scale: scale,
         textShadow: textShadow,
         mixBlendMode: "plus-lighter",
       }}

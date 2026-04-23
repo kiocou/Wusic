@@ -2,6 +2,8 @@ mod download;
 mod smtc;
 mod thumbbar;
 
+use font_kit::source::SystemSource;
+use std::collections::HashSet;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -11,6 +13,34 @@ use tauri::{
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+/// 获取系统安装的所有字体名称
+#[tauri::command]
+fn get_system_fonts() -> Vec<String> {
+    let source = SystemSource::new();
+    match source.all_families() {
+        Ok(families) => {
+            // 使用 HashSet 去重并排序
+            let mut unique_families: HashSet<String> = families.into_iter().collect();
+            let mut result: Vec<String> = unique_families.drain().collect();
+            result.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+            result
+        }
+        Err(e) => {
+            eprintln!("Failed to get system fonts: {:?}", e);
+            // 返回一些常见字体作为后备
+            vec![
+                "Microsoft YaHei".to_string(),
+                "PingFang SC".to_string(),
+                "SimSun".to_string(),
+                "SimHei".to_string(),
+                "Arial".to_string(),
+                "Helvetica".to_string(),
+                "Segoe UI".to_string(),
+            ]
+        }
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -42,7 +72,7 @@ pub fn run() {
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
-                .tooltip("Yee Music")
+                .tooltip("Wusic")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_tray_icon_event(|tray, event| match event {
@@ -107,6 +137,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             greet,
+            get_system_fonts,
             smtc::smtc_update_metadata,
             smtc::smtc_update_playback,
             download::get_default_download_dir,

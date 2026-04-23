@@ -1,25 +1,23 @@
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../ui/sheet";
 import { usePlayerStore } from "@/lib/store/playerStore";
-import { useState } from "react";
-import { LyricSheetSonglist } from "./lyric-sheet-songlist";
-import { motion, AnimatePresence } from "framer-motion";
-import { LyricSheetSonginfo } from "./lyric-sheet-songinfo";
-import { LyricSheetSongLyric } from "./lyric-sheet-songlyric";
+import { useState, lazy, Suspense, cloneElement, isValidElement, useEffect } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { LyricSheetBackground } from "./lyric-sheet-background";
 import { LyricSheetTitlebar } from "./lyric-sheetr-titlebar";
+import { motion, AnimatePresence, type PanInfo } from "framer-motion";
+import { springShared } from "@/styles/animations";
+import { createPortal } from "react-dom";
+
+// 懒加载 PlayerPage - 它包含大量动画组件
+const PlayerPage = lazy(() => import("@/pages/PlayerPage"));
 
 export function LyricSheet({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
-  const [isLyricOpen, setIsLyricOpen] = useState(false);
+  const [hasOpened, setHasOpened] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const togglePlay = usePlayerStore((s) => s.togglePlay);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useHotkeys(
     "space",
@@ -31,83 +29,83 @@ export function LyricSheet({ children }: { children: React.ReactNode }) {
     [togglePlay],
   );
 
+  function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
+    if (info.offset.y > 140 || info.velocity.y > 900) {
+      setIsOpen(false);
+    }
+  }
+
+  const handleOpen = (e: any) => {
+    setHasOpened(true);
+    setIsOpen(true);
+    if (isValidElement(children) && children.props.onClick) {
+      children.props.onClick(e);
+    }
+  };
+
+  const trigger = isValidElement(children) ? (
+    cloneElement(children as any, { onClick: handleOpen })
+  ) : (
+    <div onClick={handleOpen}>{children}</div>
+  );
+
+  if (!mounted) return trigger;
+
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent
-        side="bottom"
-        className="w-screen h-full! p-0 border-none sm:max-h-none overflow-hidden"
-        showCloseButton={false}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        <SheetHeader className="hidden">
-          <SheetTitle></SheetTitle>
-        </SheetHeader>
-
-        <LyricSheetBackground />
-
-        <div
-          className="relative h-full w-full flex flex-col"
-          onMouseDown={(e) => {
-            e.preventDefault();
+    <>
+      {trigger}
+      {createPortal(
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: isOpen ? "0%" : "100%" }}
+          transition={{ type: "spring", stiffness: 350, damping: 40, mass: 0.8 }}
+          className="fixed inset-0 z-50 overflow-hidden transform-gpu will-change-transform animate-gpu"
+          style={{ 
+            pointerEvents: isOpen ? "auto" : "none",
+            backfaceVisibility: "hidden",
+            perspective: "1000px"
           }}
         >
-          <LyricSheetTitlebar setIsOpen={setIsOpen} />
+          <motion.div
+            drag="y"
+            dragDirectionLock
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.32 }}
+            onDragEnd={handleDragEnd}
+            className="relative h-full w-full overflow-hidden bg-transparent"
+            onMouseDown={(e) => {
+              const target = e.target as HTMLElement;
+              if (
+                target.closest(
+                  "button, input, textarea, select, [role='button'], [role='slider'], [data-allow-pointer]",
+                )
+              ) {
+                return;
+              }
+              e.preventDefault();
+            }}
+          >
+            {hasOpened && (
+              <Suspense fallback={<PlayerPageLoadingFallback />}>
+                <PlayerPage />
+              </Suspense>
+            )}
+            <div className="absolute left-0 right-0 top-0 z-40 transform-gpu will-change-transform">
+              <LyricSheetTitlebar setIsOpen={setIsOpen} />
+            </div>
+          </motion.div>
+        </motion.div>,
+        document.body,
+      )}
+    </>
+  );
+}
 
-          <div className="h-full w-full flex justify-between p-4 pt-4 pb-0">
-            <motion.div
-              layout
-              initial={false}
-              animate={{
-                x: isPlaylistOpen || isLyricOpen ? "-5%" : "0%",
-                width: isPlaylistOpen || isLyricOpen ? "50%" : "100%",
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="will-change-transform relative h-full text-white flex flex-col items-center justify-center shrink-0"
-            >
-              <LyricSheetSonginfo
-                setIsOpen={setIsOpen}
-                isPlaylistOpen={isPlaylistOpen}
-                onPlaylistOpenChangeAction={setIsPlaylistOpen}
-                isLyricOpen={isLyricOpen}
-                onLyricOpenChangeAction={setIsLyricOpen}
-              />
-            </motion.div>
-            <AnimatePresence>
-              {isPlaylistOpen && (
-                <motion.div
-                  initial={{ clipPath: "inset(0% 0% 100% 0%)", opacity: 0 }}
-                  animate={{ clipPath: "inset(0% 0% 0% 0%)", opacity: 1 }}
-                  exit={{ clipPath: "inset(0% 0% 100% 0%)", opacity: 0 }}
-                  transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute right-24 top-24 bottom-12 w-[calc(50%-48px)] z-10"
-                  style={{ willChange: "clip-path, opacity" }}
-                >
-                  <LyricSheetSonglist
-                    className="flex w-full h-full"
-                    setOpen={setIsOpen}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <AnimatePresence>
-              {isLyricOpen && (
-                <motion.div
-                  initial={{ clipPath: "inset(0% 0% 100% 0%)", opacity: 0 }}
-                  animate={{ clipPath: "inset(0% 0% 0% 0%)", opacity: 1 }}
-                  exit={{ clipPath: "inset(0% 0% 100% 0%)", opacity: 0 }}
-                  transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute right-12 top-24 bottom-12 w-[calc(50%-48px)] z-10"
-                  style={{ willChange: "clip-path, opacity" }}
-                >
-                  <LyricSheetSongLyric className="flex w-full h-full" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+// PlayerPage 加载占位符
+function PlayerPageLoadingFallback() {
+  return (
+    <div className="relative h-full min-h-[calc(100vh-5rem)] w-full overflow-hidden bg-[#090909] text-white flex items-center justify-center">
+      <div className="w-16 h-16 rounded-full bg-white/10 animate-pulse" />
+    </div>
   );
 }

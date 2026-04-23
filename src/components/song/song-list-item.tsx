@@ -54,6 +54,7 @@ export function SongListItem({
                 src={GetThumbnail(song.al.picUrl!)}
                 alt={`${song.al?.name}专辑封面`}
                 loading="lazy"
+                decoding="async"
               />
 
               {!isPlaying && (

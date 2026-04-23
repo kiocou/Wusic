@@ -14,11 +14,22 @@ import {
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { PlaylistSongPreview } from "./playlist-song-preview";
 import { useUserStore } from "@/lib/store/userStore";
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { YeeButton } from "../yee-button";
 import { Virtuoso } from "react-virtuoso";
+import { cn } from "@/lib/utils";
 
-export function PlaylistSheet() {
+export function PlaylistSheet({
+  children,
+  contentClassName,
+  container,
+  side = "right",
+}: {
+  children?: ReactNode;
+  contentClassName?: string;
+  container?: HTMLElement | null;
+  side?: "top" | "right" | "bottom" | "left";
+}) {
   const playlist = usePlayerStore((s) => s.playlist);
   const currentSong = usePlayerStore((s) => s.currentSong);
   const clearPlaylist = usePlayerStore((s) => s.clearPlaylist);
@@ -35,15 +46,21 @@ export function PlaylistSheet() {
   return (
     <Sheet open={open} onOpenChange={setOpen} modal={false}>
       <SheetTrigger asChild>
-        <YeeButton
-          variant="ghost"
-          icon={<TextBulletList16Regular className="size-4" />}
-        />
+        {children || (
+          <YeeButton
+            variant="ghost"
+            icon={<TextBulletList16Regular className="size-4" />}
+          />
+        )}
       </SheetTrigger>
       <SheetContent
-        className="bg-card/90 p-2 pr-0 w-full backdrop-blur-md drop-shadow-2xl"
+        side={side}
+        className={cn(
+          "bg-card/90 p-2 pr-0 w-full backdrop-blur-md drop-shadow-2xl",
+          contentClassName,
+        )}
         showCloseButton={false}
-        container={document.getElementById("main-wrapper")}
+        container={container ?? document.getElementById("main-wrapper")}
       >
         <SheetHeader>
           <div className="flex justify-between items-center">
