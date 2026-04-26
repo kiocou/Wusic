@@ -5,10 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function PlaylistActions({ type, data }: ActionProps) {
-  if (type !== "list" && data.resourceType !== "list") return null;
-
   const { closeMenu } = useContextMenuStore();
   const navigate = useNavigate();
+  const playlistId = data?.id ?? data?.resourceId;
+
+  if ((type !== "list" && data?.resourceType !== "list") || !playlistId) {
+    return null;
+  }
 
   return (
     <>
@@ -20,7 +23,7 @@ export function PlaylistActions({ type, data }: ActionProps) {
           e.stopPropagation();
 
           closeMenu();
-          navigate(`/detail/playlist?id=${data.id}`);
+          navigate(`/detail/playlist?id=${playlistId}`);
         }}
       />
     </>

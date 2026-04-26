@@ -1,7 +1,7 @@
 import { getDailyRecommend } from "@/lib/services/recommend";
 import { Song } from "@/lib/types";
-import { Vibrant } from "node-vibrant/browser";
-import { useEffect, useState } from "react";
+import { extractColorFromImage } from "@/utils/color-utils";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import SFIcon from "@bradleyhodges/sfsymbols-react";
 import {
@@ -15,18 +15,24 @@ import {
 import { YeeButton } from "../yee-button";
 import { useNavigate } from "react-router-dom";
 import { usePlayerStore } from "@/lib/store/playerStore";
+import { motion } from "framer-motion";
 
 export function RecommendAndFMSection() {
   return (
-    <div className="w-full h-48 flex gap-8">
+    <motion.div 
+      className="w-full h-48 flex gap-8"
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+    >
       <RecommendCard />
       <FmCard />
-    </div>
+    </motion.div>
   );
 }
 
-const colorCache: Record<string, { vibrant: string; lightVibrant: string }> =
-  {};
+
 
 function RecommendCard() {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -46,29 +52,15 @@ function RecommendCard() {
       setCoverUrl(url);
 
       if (url) {
-        if (colorCache[url]) {
-          setVibrant(colorCache[url].vibrant);
-          setLightVibrant(colorCache[url].lightVibrant);
-          return;
+          try {
+            extractColorFromImage(url).then((colors) => {
+              setVibrant(colors.dark);
+              setLightVibrant(colors.light);
+            });
+          } catch (err) {
+            console.error("提取颜色失败", err);
+          }
         }
-
-        const v = new Vibrant(url, {
-          quality: 1,
-          colorCount: 64,
-        });
-
-        try {
-          const palette = await v.getPalette();
-          const vibrant = palette.DarkVibrant?.hex || "";
-          const lightVibrant = palette.Vibrant?.hex || "";
-
-          colorCache[url] = { vibrant, lightVibrant };
-          setVibrant(vibrant);
-          setLightVibrant(lightVibrant);
-        } catch (err) {
-          console.error("提取颜色失败", err);
-        }
-      }
     }
     fetchData();
   }, []);
@@ -77,18 +69,38 @@ function RecommendCard() {
   const day = date.getDate();
   const month = date.getMonth() + 1;
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMove = (e: React.PointerEvent) => {
+    if (!cardRef.current) return;
+
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    cardRef.current.style.setProperty("--mouse-x", `${x}px`);
+    cardRef.current.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   return (
-    <div
-      className="w-full h-full bg-(--dynamic-color) rounded-xl overflow-hidden relative text-white drop-shadow-2xl cursor-pointer"
+    <motion.div
+      ref={cardRef}
+      className="w-full h-full bg-(--dynamic-color) rounded-xl overflow-hidden relative text-white drop-shadow-2xl cursor-pointer group transform-gpu"
       style={
         {
           "--dynamic-color": vibrant || "gray",
           "--light-vibrant": lightVibrant || "white",
+          "--mouse-x": "50%",
+          "--mouse-y": "50%",
+          "--spotlight-color": "rgba(255, 255, 255, 0.3)",
         } as React.CSSProperties
       }
       onClick={() => {
         navigate("/recommend/daily");
       }}
+      onPointerMove={handleMove}
+      whileHover={{ scale: 1.01, y: -2 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
     >
       <div className="absolute inset-0 z-0 flex items-center justify-center">
         {coverUrl && (
@@ -108,21 +120,35 @@ function RecommendCard() {
 
         <div className="flex flex-col gap-2">
           <span className="text-white text-lg drop-shadow-md font-medium">
-            {month} 月 {day} 日，从《{songs[0]?.name}》听起
+            {songs.length > 0
+              ? `${month} 月 ${day} 日，从《${songs[0]?.name}》听起`
+              : `${month} 月 ${day} 日，发现今日推荐`}
           </span>
           <Button
             className="w-24 bg-(--dynamic-color) border-b-(--light-vibrant) border-b-2 drop-shadow-lg font-light cursor-pointer transition-all duration-300 hover:brightness-110 hover:shadow-xl text-white"
-            onClick={() => playQueue(songs)}
+            disabled={songs.length === 0}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (songs.length > 0) playQueue(songs);
+            }}
           >
             立即播放
           </Button>
         </div>
       </div>
-    </div>
+      
+      {/* 光感效果 */}
+      <div 
+        className="absolute inset-0 pointer-events-none transition-opacity duration-500 ease-out opacity-0 group-hover:opacity-100"
+        style={{
+          background: `radial-gradient(250px circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent)`,
+        } as React.CSSProperties}
+      />
+    </motion.div>
   );
 }
 
-const fmColorCache: Record<string, string> = {};
+
 
 function FmCard() {
   const {
@@ -136,6 +162,17 @@ function FmCard() {
   } = usePlayerStore();
   const [bgColor, setBgColor] = useState("#2f2f2f"); // 初始深灰色
   const trashFmSong = usePlayerStore((s) => s.trashFmSong);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMove = (e: React.PointerEvent) => {
+    if (!cardRef.current) return;
+
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    cardRef.current.style.setProperty("--mouse-x", `${x}px`);
+    cardRef.current.style.setProperty("--mouse-y", `${y}px`);
+  };
 
   const currentFmSong = fmPlaylist[0];
 
@@ -143,34 +180,36 @@ function FmCard() {
     if (fmPlaylist.length === 0) {
       fetchFmSongs();
     }
-  }, []);
+  }, [fetchFmSongs, fmPlaylist.length]);
   useEffect(() => {
     const url = currentFmSong?.al?.picUrl;
     if (url) {
-      if (fmColorCache[url]) {
-        setBgColor(fmColorCache[url]);
-        return;
+      try {
+        extractColorFromImage(url).then((colors) => {
+          setBgColor(colors.dark);
+        });
+      } catch (err) {
+        console.error("提取颜色失败", err);
       }
-
-      const v = new Vibrant(url);
-      v.getPalette().then((palette) => {
-        const color = palette.DarkVibrant?.hex || palette.DarkMuted?.hex;
-        if (color) {
-          fmColorCache[url] = color;
-          setBgColor(color);
-        }
-      });
     }
   }, [currentFmSong]);
 
   const isPlayingFm = isFmMode && isPlaying;
 
   return (
-    <div
-      className="w-full h-full rounded-xl drop-shadow-2xl relative text-white overflow-hidden shadow-inner transition-colors duration-1000"
+    <motion.div
+      ref={cardRef}
+      className="w-full h-full rounded-xl drop-shadow-2xl relative text-white overflow-hidden shadow-inner transition-colors duration-1000 group transform-gpu"
       style={{
         background: `linear-gradient(135deg, ${bgColor} 0%, color-mix(in srgb, ${bgColor}, black 20%) 100%)`,
-      }}
+        "--mouse-x": "50%",
+        "--mouse-y": "50%",
+        "--spotlight-color": "rgba(255, 255, 255, 0.3)",
+      } as React.CSSProperties}
+      onPointerMove={handleMove}
+      whileHover={{ scale: 1.01, y: -2 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
     >
       <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
 
@@ -242,6 +281,14 @@ function FmCard() {
           )}
         </div>
       </div>
-    </div>
+      
+      {/* 光感效果 */}
+      <div 
+        className="absolute inset-0 pointer-events-none transition-opacity duration-500 ease-out opacity-0 group-hover:opacity-100"
+        style={{
+          background: `radial-gradient(250px circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent)`,
+        } as React.CSSProperties}
+      />
+    </motion.div>
   );
 }

@@ -1,4 +1,5 @@
 mod download;
+mod local_music;
 mod smtc;
 mod thumbbar;
 
@@ -51,7 +52,7 @@ pub fn run() {
     );
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.set_focus();
@@ -144,6 +145,7 @@ pub fn run() {
             download::ensure_dir_exists,
             download::download_song,
             download::pause_download,
+            local_music::scan_local_music_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Window } from "@tauri-apps/api/window";
+import { isTauriRuntime } from "@/lib/tauri";
 
 let wasMaximizedBeforeFullscreen = false;
 
@@ -9,6 +10,8 @@ export function useAppWindow() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
+    if (!isTauriRuntime()) return;
+
     let unlistenResize: (() => void) | null = null;
 
     import("@tauri-apps/api/window").then(async (module) => {
@@ -29,6 +32,8 @@ export function useAppWindow() {
       });
 
       unlistenResize = unlisten;
+    }).catch(() => {
+      setAppWindow(null);
     });
 
     return () => {

@@ -40,7 +40,14 @@ export function Titlebar() {
 
   return (
     <div
-      className="w-full h-12 top-0 z-50 flex items-center pr-0"
+      className="w-full h-12 top-0 z-50 flex items-center pr-0 bg-[var(--titlebar-surface)] text-[var(--titlebar-text)] border-b border-[var(--titlebar-border)] backdrop-blur-xl transition-[background,color,border-color,box-shadow,backdrop-filter] duration-300"
+      style={{
+        background: "var(--titlebar-surface)",
+        borderBottomColor: "var(--titlebar-border)",
+        boxShadow: "var(--titlebar-shadow)",
+        backdropFilter: "var(--titlebar-filter)",
+        WebkitBackdropFilter: "var(--titlebar-filter)",
+      }}
       onMouseDown={(e) => {
         if (e.button !== 0) return;
         const currentTime = new Date().getTime();
@@ -73,7 +80,7 @@ export function Titlebar() {
             >
               <YeeButton
                 variant="ghost"
-                className="cursor-pointer shrink-0 hover:bg-foreground/5 rounded-sm size-8 -ml-0.5"
+                className="cursor-pointer shrink-0 hover:bg-[var(--sidebar-item-hover-bg)] rounded-sm size-8 -ml-0.5"
                 icon={<ArrowLeft20Regular className="size-4" />}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={() => navigate(-1)}
@@ -89,7 +96,7 @@ export function Titlebar() {
         >
           <YeeButton
             variant="ghost"
-            className="cursor-pointer shrink-0 hover:bg-foreground/5 rounded-sm size-8 -ml-0.5"
+            className="cursor-pointer shrink-0 hover:bg-[var(--sidebar-item-hover-bg)] rounded-sm size-8 -ml-0.5"
             icon={<Navigation20Regular className="size-4" />}
             onClick={toggleSidebar}
             onMouseDown={(e) => e.stopPropagation()}
@@ -105,7 +112,7 @@ export function Titlebar() {
                 className="rounded-sm"
               />
             </div>
-            <span className="truncate font-light text-sm text-foreground">
+            <span className="truncate font-medium text-sm text-[var(--titlebar-text)]">
               Wusic
             </span>
           </div>
@@ -122,7 +129,7 @@ export function Titlebar() {
         {onRefresh && (
           <YeeButton
             variant="ghost"
-            className="cursor-pointer shrink-0 hover:bg-foreground/5 rounded-sm size-8 mr-2"
+            className="cursor-pointer shrink-0 hover:bg-[var(--sidebar-item-hover-bg)] rounded-sm size-8 mr-2"
             icon={
               <ArrowClockwise24Regular
                 className={cn(isRefreshing && "animate-spin")}
@@ -134,7 +141,7 @@ export function Titlebar() {
           />
         )}
         <Button
-          className="cursor-pointer size-12 rounded-none border-0 hover:bg-black/5"
+          className="cursor-pointer size-12 rounded-none border-0 hover:bg-[var(--sidebar-item-hover-bg)]"
           variant="ghost"
           size="icon"
           onClick={minimize}
@@ -143,7 +150,7 @@ export function Titlebar() {
           <Subtract24Regular className="size-4" />
         </Button>
         <Button
-          className="cursor-pointer size-12 rounded-none border-0 hover:bg-black/5"
+          className="cursor-pointer size-12 rounded-none border-0 hover:bg-[var(--sidebar-item-hover-bg)]"
           variant="ghost"
           size="icon"
           onClick={toogleMaximize}

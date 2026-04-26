@@ -19,58 +19,54 @@ import {
   Info20Regular,
   Speaker220Regular,
   TextFont20Regular,
-  Water20Regular,
   Window20Regular,
   Settings20Regular,
 } from "@fluentui/react-icons";
 import { IconBrandGithub } from "@tabler/icons-react";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import { Update, check } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
+import type { Update } from "@tauri-apps/plugin-updater";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { useEffect } from "react";
-import { getVersion } from "@tauri-apps/api/app";
 import { Input } from "@/components/ui/input";
 import { useDownloadStore } from "@/lib/store/downloadStore";
-import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
 import { Popover, PopoverItem } from "@/components/yee-popover";
+import { isTauriRuntime } from "@/lib/tauri";
 
 import { Play20Regular, Desktop20Regular } from "@fluentui/react-icons";
 
 export default function SettingPage() {
+  async function openProjectUrl() {
+    const url = "https://github.com/kiocou/Wusic";
+    if (!isTauriRuntime()) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    const { openUrl } = await import("@tauri-apps/plugin-opener");
+    await openUrl(url);
+  }
+
   return (
-    <div className="w-full h-full px-8 py-8 flex flex-col gap-8">
-      <div className="w-full h-full flex flex-col gap-4">
-        <h2 className="text-sm font-bold">常规设置</h2>
-        <div className="flex flex-col gap-2">
-          <AppearanceSettingCard />
-          <FontSettingCard />
-        </div>
-      </div>
+    <div className="w-full h-full px-8 py-8 flex flex-col gap-10">
+      <SectionPanel title="外观">
+        <AppearanceSettingCard />
+        <FontSettingCard />
+      </SectionPanel>
 
-      <div className="w-full h-full flex flex-col gap-4">
-        <h2 className="text-sm font-bold">播放与下载</h2>
-        <div className="flex flex-col gap-2">
-          <AudioSettingCard />
-          <PlaybackSettingCard />
-          <DownloadSettingCard />
-        </div>
-      </div>
+      <SectionPanel title="播放与下载">
+        <AudioSettingCard />
+        <PlaybackSettingCard />
+        <DownloadSettingCard />
+      </SectionPanel>
 
-      <div className="w-full h-full flex flex-col gap-4">
-        <h2 className="text-sm font-bold">高级与性能</h2>
-        <div className="flex flex-col gap-2">
-          <PerformanceSettingCard />
-          <SystemSettingCard />
-        </div>
-      </div>
+      <SectionPanel title="高级与性能">
+        <PerformanceSettingCard />
+        <SystemSettingCard />
+      </SectionPanel>
 
-      <div className="w-full h-full flex flex-col gap-4">
-        <h2 className="text-sm font-bold">关于</h2>
+      <SectionPanel title="关于">
         <div className="flex flex-col gap-2">
           <SettingsExpandar
             title="Wusic"
@@ -90,9 +86,7 @@ export default function SettingPage() {
                 trailing={
                   <IconBrandGithub
                     className="size-4 hover:text-muted-foreground text-foreground cursor-pointer"
-                    onClick={async () =>
-                      await openUrl("https://github.com/kiocou/Wusic")
-                    }
+                    onClick={openProjectUrl}
                   />
                 }
               />
@@ -100,7 +94,7 @@ export default function SettingPage() {
           </SettingsExpandar>
           <UpdateSettingCard />
         </div>
-      </div>
+      </SectionPanel>
     </div>
   );
 }
@@ -140,15 +134,22 @@ function PlaybackSettingCard() {
         />
         {playback.crossfade && (
           <SettingsExpandarDetail desc="淡入淡出时长 (秒)">
-            <Input
-              type="number"
-              className="w-20 bg-card"
-              value={playback.crossfadeDuration}
-              min={1}
-              max={10}
-              step={1}
-              onChange={(e) => updatePlayback({ crossfadeDuration: Number(e.target.value) })}
-            />
+              <Input
+                type="number"
+                className="w-20 bg-card"
+                value={playback.crossfadeDuration}
+                min={1}
+                max={10}
+                step={1}
+                onChange={(e) =>
+                  updatePlayback({
+                    crossfadeDuration: Math.min(
+                      Math.max(Number(e.target.value) || 1, 1),
+                      10,
+                    ),
+                  })
+                }
+              />
           </SettingsExpandarDetail>
         )}
       </div>
@@ -211,7 +212,7 @@ function SystemSettingCard() {
           }
         />
         <SettingsExpandarDetail
-          desc="侧边栏自动折叠"
+          desc="侧边栏自动展开/收起"
           trailing={
             <ToggleSwitch
               checked={system.autoCollapseSidebar}
@@ -272,7 +273,14 @@ function DownloadSettingCard() {
   }, []);
 
   async function handleChangeDir() {
+    if (!isTauriRuntime()) {
+      toast.info("浏览器预览环境不支持选择本地下载目录，请在桌面端使用。");
+      return;
+    }
+
     try {
+      const { open } = await import("@tauri-apps/plugin-dialog");
+      const { invoke } = await import("@tauri-apps/api/core");
       const selected = await open({
         directory: true,
         title: "选择下载目录",
@@ -334,7 +342,7 @@ function AppearanceSettingCard() {
           <SettingsExpandarDetail>
             <div className="w-full flex flex-col items-start">
               <RadioGroup
-                defaultValue={theme}
+                value={theme}
                 onValueChange={(val) =>
                   setTheme(val as AppearanceSettings["theme"])
                 }
@@ -490,6 +498,23 @@ function PerformanceSettingCard() {
   );
 }
 
+function SectionPanel({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        {title}
+      </h2>
+      <div className="flex flex-col gap-2">{children}</div>
+    </div>
+  );
+}
+
 function ToggleSwitch({
   checked,
   onCheckedChange,
@@ -499,6 +524,7 @@ function ToggleSwitch({
 }) {
   return (
     <button
+      type="button"
       role="switch"
       aria-checked={checked}
       onClick={() => onCheckedChange(!checked)}
@@ -530,8 +556,8 @@ function FontSettingCard() {
     async function fetchFonts() {
       try {
         // 检查是否在 Tauri 环境中
-        const isTauri = "__TAURI__" in window;
-        if (isTauri) {
+        if (isTauriRuntime()) {
+          const { invoke } = await import("@tauri-apps/api/core");
           const systemFonts = await invoke<string[]>("get_system_fonts");
           setFonts(systemFonts);
         } else {
@@ -685,6 +711,14 @@ function UpdateSettingCard() {
   } | null>(null);
 
   async function checkForUpdates() {
+    if (!isTauriRuntime()) {
+      setUpdateObj(null);
+      setIsNewest(true);
+      toast.info("浏览器预览环境不支持检查桌面端更新。", { duration: 3000 });
+      return;
+    }
+
+    const { check } = await import("@tauri-apps/plugin-updater");
     const update = await check();
     if (update) {
       console.log(`found update ${update.version}`);
@@ -727,6 +761,7 @@ function UpdateSettingCard() {
       console.log("update installed");
       toast.success("更新下载完成，即将重启并挂载更新...", { duration: 3000 });
       setTimeout(async () => {
+        const { relaunch } = await import("@tauri-apps/plugin-process");
         await relaunch();
       }, 3000);
     } catch (e) {
@@ -753,11 +788,17 @@ function UpdateSettingCard() {
 
   useEffect(() => {
     async function loadVersion() {
-      const v = await getVersion();
-      setVersion(v);
+      if (!isTauriRuntime()) {
+        setVersion("Preview");
+        return;
+      }
+
+      const { getVersion } = await import("@tauri-apps/api/app");
+      const version = await getVersion();
+      setVersion(version);
     }
 
-    loadVersion();
+    loadVersion().catch(() => setVersion("Preview"));
   }, []);
 
   return (

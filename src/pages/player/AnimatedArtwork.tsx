@@ -57,15 +57,14 @@ export function AnimatedArtwork({
       {src ? (
         <motion.img
           ref={imgRef}
-          key={src}
           src={src}
           alt={alt}
           draggable={false}
           loading="eager"
           decoding="async"
           onLoad={() => setLoaded(true)}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: loaded ? 1 : 0, scale: loaded ? 1 : 1.05 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: loaded ? 1 : 0 }}
           transition={smoothLinear}
           className={cn(
             "h-full w-full object-cover transform-gpu will-change-transform",

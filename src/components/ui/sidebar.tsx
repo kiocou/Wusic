@@ -184,10 +184,14 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="bg-[var(--sidebar-surface)] text-[var(--sidebar-text)] border-[var(--titlebar-border)] w-(--sidebar-width) p-0 [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              background: "var(--sidebar-surface)",
+              boxShadow: "var(--sidebar-shadow)",
+              backdropFilter: "var(--sidebar-filter)",
+              WebkitBackdropFilter: "var(--sidebar-filter)",
             } as React.CSSProperties
           }
           side={side}
@@ -241,7 +245,13 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-transparent group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-2xl group-data-[collapsible=icon]:rounded-none group-data-[variant=floating]:shadow-md group-data-[variant=floating]:ring-1 flex size-full flex-col"
+          className="border-r border-[var(--titlebar-border)] bg-transparent group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-2xl group-data-[collapsible=icon]:rounded-none group-data-[variant=floating]:shadow-md group-data-[variant=floating]:ring-1 flex size-full flex-col transition-[background,border-color,box-shadow,backdrop-filter] duration-300"
+          style={{
+            background: "var(--sidebar-surface)",
+            boxShadow: "var(--sidebar-shadow)",
+            backdropFilter: "var(--sidebar-filter)",
+            WebkitBackdropFilter: "var(--sidebar-filter)",
+          }}
         >
           {children}
         </div>

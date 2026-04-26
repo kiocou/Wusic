@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useSnapshot } from 'framer-motion';
 
 /**
  * 列表渲染冻结 Hook

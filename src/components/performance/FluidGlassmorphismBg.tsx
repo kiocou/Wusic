@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { isTauriRuntime } from '@/lib/tauri';
 
 // ============================================================================
 // GLSL Shader 代码
@@ -315,7 +315,10 @@ export const FluidGlassmorphismBg: React.FC<FluidGlassmorphismBgProps> = ({
     let unlistenBlur: (() => void) | undefined;
 
     const setupListeners = async () => {
+      if (!isTauriRuntime()) return;
+
       try {
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
         const appWindow = getCurrentWindow();
         
         unlistenBlur = await appWindow.onFocusChanged(({ payload: focused }) => {

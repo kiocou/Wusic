@@ -1,5 +1,6 @@
 import { Album } from "./album";
 import { Artist } from "./artist";
+import { PlayableTrackSource } from "./local";
 
 export type Level =
   | "standard" // 标准
@@ -70,6 +71,11 @@ export interface Song {
   t?: 0 | 1 | 2; // 0: 一般类型 1: 通过云盘上传的音乐，无公开对应 2: 通过云盘上传的音乐，有公开对应
   s_id?: number; // 对于 t = 2 的歌曲，表示匹配到的公开版本歌曲 ID
   privilege?: Privilege;
+  source?: PlayableTrackSource;
+  localPath?: string;
+  localFileName?: string;
+  localFileSize?: number;
+  localExtension?: string;
 }
 
 export interface Lyric {

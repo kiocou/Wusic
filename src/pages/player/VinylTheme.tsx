@@ -59,11 +59,11 @@ export function VinylTheme() {
           isThemeSwitching
             ? undefined
             : {
-                scale: 1.025,
-                rotateZ: 0.35,
+                scale: 1.01,
+                rotateZ: 0.15,
               }
         }
-        whileTap={isThemeSwitching ? undefined : { scale: 0.96 }}
+        whileTap={isThemeSwitching ? undefined : { scale: 0.985 }}
         transition={springApple}
         className="group relative mt-16 aspect-square w-[min(62vh,38rem)] cursor-pointer border-0 bg-transparent p-0 text-left transform-gpu will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-100/55 disabled:pointer-events-none disabled:opacity-80"
       >
@@ -83,7 +83,7 @@ export function VinylTheme() {
             <AnimatedArtwork
               src={coverUrl}
               alt={`${currentSong?.name || "Album"} cover`}
-              layoutId={PLAYER_LAYOUT_IDS.artwork}
+              layoutId={PLAYER_LAYOUT_IDS.artworkVinyl}
               className="h-full w-full rounded-full border-[10px] border-zinc-950 bg-stone-900 shadow-inner"
             />
           </div>

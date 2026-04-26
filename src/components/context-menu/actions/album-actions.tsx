@@ -5,10 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 
 export function AlbumActions({ type, data }: ActionProps) {
-  if (type !== "album" && data.resourceType !== "album") return null;
-
   const { closeMenu } = useContextMenuStore();
   const navigate = useNavigate();
+  const albumId = data?.id ?? data?.resourceId;
+
+  if ((type !== "album" && data?.resourceType !== "album") || !albumId) {
+    return null;
+  }
 
   return (
     <>
@@ -20,7 +23,7 @@ export function AlbumActions({ type, data }: ActionProps) {
           e.stopPropagation();
 
           closeMenu();
-          navigate(`/detail/album?id=${data.id}`);
+          navigate(`/detail/album?id=${albumId}`);
         }}
       />
     </>

@@ -20,6 +20,7 @@ import { useUserStore } from "@/lib/store/userStore";
 import { subAlbum } from "@/lib/services/user";
 import { toast } from "sonner";
 import { BlurLayer } from "@/components/blur-layer";
+import { StatePanel } from "@/components/ui/state-panel";
 
 function AlbumContent() {
   const [searchParams] = useSearchParams();
@@ -77,7 +78,13 @@ function AlbumContent() {
       case "song":
         return <AlbumSongs songs={album!.songs!} />;
       case "comment":
-        return <div>开发中...</div>;
+        return (
+          <StatePanel
+            compact
+            title="评论暂未接入"
+            description="当前版本先保留入口，避免误导为空白页；接入评论接口后会在这里展示热门评论和最新评论。"
+          />
+        );
       case "desc":
         return <AlbumDesc desc={album!.description!} />;
     }

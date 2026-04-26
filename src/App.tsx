@@ -1,14 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { lazy, Suspense, useEffect, useState } from "react";
-import { listen } from "@tauri-apps/api/event";
-import { AnimatePresence, motion } from "framer-motion";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { initMediaSession } from "./lib/store/mediaSessionSync";
-import { useMiniModeStore } from "./hooks/useMiniMode";
 import RootLayout from "./layouts/RootLayout";
-import { MiniPlayer } from "./components/mini-player";
 import { useSettingStore } from "./lib/store/settingStore";
 import { corePlayer } from "./lib/player/corePlayer";
 import { usePlayerStore } from "./lib/store/playerStore";
+import { isTauriRuntime } from "./lib/tauri";
 
 // 懒加载所有页面组件 - 减少首屏加载体积
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -17,7 +14,6 @@ const AlbumDetailPage = lazy(() => import("./pages/detail/AlbumDetailPage"));
 const ArtistDetailPage = lazy(() => import("./pages/detail/ArtistDetailPage"));
 const PlaylistDetailPage = lazy(() => import("./pages/detail/PlaylistDetailPage"));
 const RecentPage = lazy(() => import("./pages/library/RecentPage"));
-const CloudPage = lazy(() => import("./pages/library/CloudPage"));
 const DownloadPage = lazy(() => import("./pages/library/DownloadPage"));
 const LocalPage = lazy(() => import("./pages/library/LocalPage"));
 const SettingPage = lazy(() => import("./pages/SettingPage"));
@@ -78,14 +74,6 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "library/cloud",
-        element: (
-          <Suspense fallback={<PageLoadingFallback />}>
-            <CloudPage />
-          </Suspense>
-        ),
-      },
-      {
         path: "library/download",
         element: (
           <Suspense fallback={<PageLoadingFallback />}>
@@ -136,42 +124,58 @@ function PageLoadingFallback() {
 
 export default function App() {
   const [isBackground, setIsBackground] = useState(false);
-  const isMiniMode = useMiniModeStore((s) => s.isMiniMode);
-
-  let mediaSessionInitialized = false;
+  const mediaSessionInitialized = useRef(false);
 
   useEffect(() => {
-    if (!mediaSessionInitialized) {
+    if (!mediaSessionInitialized.current) {
       initMediaSession();
-      mediaSessionInitialized = true;
+      mediaSessionInitialized.current = true;
     }
   }, []);
 
   // ── 关闭到托盘 / 真正退出 ──────────────────────────────────────
   useEffect(() => {
-    const unlistenBg = listen("app-background", async () => {
-      const closeToTray = useSettingStore.getState().system.closeToTray;
-      if (closeToTray) {
-        // 隐藏到托盘（Rust 端已处理 hide，这里让 React 不渲染以省资源）
-        setIsBackground(true);
-      } else {
-        // 用户希望直接退出
-        try {
-          const { exit } = await import("@tauri-apps/plugin-process");
-          await exit(0);
-        } catch {
-          setIsBackground(true); // 兜底：退出失败时至少隐藏
-        }
-      }
-    });
+    if (!isTauriRuntime()) return;
 
-    const unlistenFg = listen("app-foreground", () => {
-      setIsBackground(false);
-    });
+    let unlistenBg: (() => void) | undefined;
+    let unlistenFg: (() => void) | undefined;
+    let cancelled = false;
+
+    const setupListeners = async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+
+      unlistenBg = await listen("app-background", async () => {
+        const closeToTray = useSettingStore.getState().system.closeToTray;
+        if (closeToTray) {
+          // 隐藏到托盘（Rust 端已处理 hide，这里让 React 不渲染以省资源）
+          setIsBackground(true);
+        } else {
+          // 用户希望直接退出
+          try {
+            const { exit } = await import("@tauri-apps/plugin-process");
+            await exit(0);
+          } catch {
+            setIsBackground(true); // 兜底：退出失败时至少隐藏
+          }
+        }
+      });
+
+      unlistenFg = await listen("app-foreground", () => {
+        setIsBackground(false);
+      });
+
+      if (cancelled) {
+        unlistenBg?.();
+        unlistenFg?.();
+      }
+    };
+
+    setupListeners();
 
     return () => {
-      unlistenBg.then((f) => f());
-      unlistenFg.then((f) => f());
+      cancelled = true;
+      unlistenBg?.();
+      unlistenFg?.();
     };
   }, []);
 

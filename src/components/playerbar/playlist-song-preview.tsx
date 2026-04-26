@@ -40,6 +40,8 @@ export const PlaylistSongPreview = memo(
     const LikeIcon = isLike ? LIKE_ICON.like : LIKE_ICON.unlike;
     const openMenu = useContextMenuStore((s) => s.openMenu);
     const { handleLike } = useSongLogic();
+    const coverUrl = GetThumbnail(song.al?.picUrl || song.album?.picUrl || "");
+    const artists = song.ar ?? song.artists ?? [];
 
     function handlePlay(e: React.MouseEvent) {
       e.preventDefault();
@@ -68,7 +70,7 @@ export const PlaylistSongPreview = memo(
     return (
       <div
         className={cn(
-          "flex justify-between items-center rounded-md transition-all duration-200 ease-in-out group",
+          "flex justify-between items-center rounded-md transition-all duration-200 ease-in-out group transform-gpu will-change-transform",
         )}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -80,21 +82,33 @@ export const PlaylistSongPreview = memo(
             className="shrink-0 w-12 h-12 rounded-sm shadow-sm overflow-hidden relative group cursor-pointer"
             onClick={isPlaying ? handlePause : handlePlay}
           >
-            <img
-              className={cn(
-                "w-full h-full object-cover group-hover:brightness-50 transition-all duration-200 ease-out",
-                isPlaying && "brightness-50",
-                coverStyle,
-              )}
-              src={GetThumbnail(song.al?.picUrl || song.album?.picUrl || "")}
-              alt={`${song.al?.name}专辑封面`}
-              loading="lazy"
-            />
+            {coverUrl ? (
+              <img
+                className={cn(
+                  "w-full h-full object-cover group-hover:brightness-50 transition-all duration-200 ease-out",
+                  isPlaying && "brightness-50",
+                  coverStyle,
+                )}
+                src={coverUrl}
+                alt={`${song.al?.name ?? song.album?.name ?? song.name}专辑封面`}
+                loading="lazy"
+              />
+            ) : (
+              <div
+                className={cn(
+                  "flex h-full w-full items-center justify-center bg-foreground/5 text-foreground/40 group-hover:brightness-75",
+                  isPlaying && "brightness-75",
+                  coverStyle,
+                )}
+              >
+                <Play24Filled className="size-4" />
+              </div>
+            )}
 
             <PlayButton
               className={cn(
-                " transition-opacity duration-200 ease-out text-white size-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-                !isPlaying && "opacity-0  group-hover:opacity-100",
+                "transition-opacity duration-200 ease-out text-white size-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+                !isPlaying && "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100",
               )}
             />
           </div>
@@ -106,9 +120,9 @@ export const PlaylistSongPreview = memo(
               {song.name}
             </span>
             <div className="line-clamp-1">
-              {song.ar.map((ar, idx) => (
+              {artists.map((ar, idx) => (
                 <Link
-                  to={`/detail/artist/${ar.id}`}
+                  to={`/detail/artist?id=${ar.id}`}
                   key={`${song.id}-${ar.id}-${idx}`}
                   onClick={() => setOpen(false)}
                   className={cn(
@@ -117,7 +131,7 @@ export const PlaylistSongPreview = memo(
                   )}
                 >
                   {ar.name}
-                  {idx < song.ar.length - 1 && "、"}
+                  {idx < artists.length - 1 && "、"}
                 </Link>
               ))}
             </div>
@@ -127,19 +141,23 @@ export const PlaylistSongPreview = memo(
           <div className="hidden group-hover:flex gap-2 items-center">
             <YeeButton
               variant="ghost"
-              onClick={() => handleLike("song", song.id)}
+              onClick={() => handleLike("song", song)}
               icon={
                 <LikeIcon
                   className={cn("size-4", textStyle, isLike && "text-red-500")}
                 />
               }
               className={buttonStyle}
+              aria-label={isLike ? "取消喜欢" : "喜欢"}
+              title={isLike ? "取消喜欢" : "喜欢"}
             />
             <YeeButton
               variant="ghost"
               onClick={handleRemove}
               icon={<Delete24Regular className={cn("size-4", textStyle)} />}
               className={buttonStyle}
+              aria-label="从播放列表移除"
+              title="移除"
             />
           </div>
 

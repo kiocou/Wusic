@@ -1,8 +1,7 @@
 import { create } from "zustand";
-import { isTauri } from "@tauri-apps/api/core";
-import { Effect } from "@tauri-apps/api/window";
 import { getSettingsStore } from "./settingStore/settings.persistence";
 import { QualityKey } from "../constants/song";
+import { isTauriRuntime } from "@/lib/tauri";
 
 export interface MeshGradientSettings {
   distortion: number;
@@ -22,6 +21,7 @@ export interface PerformanceSettings {
   fluidBackground: boolean;
   fluidBackgroundIntensity: number;
   hardwareAcceleration: boolean;
+  audioVisualizer: boolean;
 }
 
 export interface AppearanceSettings {
@@ -68,6 +68,7 @@ const defaultAppearanceSettings: AppearanceSettings = {
     fluidBackground: true,
     fluidBackgroundIntensity: 0.8,
     hardwareAcceleration: true,
+    audioVisualizer: true,
   },
 };
 
@@ -250,33 +251,41 @@ export const useSettingStore = create<SettingStore>((set, get) => ({
 function applyTheme(theme: AppearanceSettings["theme"]) {
   const root = window.document.documentElement;
   root.classList.remove("light", "dark");
-  if (theme === "system") {
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-      .matches
-      ? "dark"
-      : "light";
-    root.classList.add(systemTheme);
-  } else {
-    root.classList.add(theme);
-  }
+  root.classList.add(getEffectiveTheme(theme));
+}
+
+function getEffectiveTheme(theme: AppearanceSettings["theme"]): "light" | "dark" {
+  if (theme !== "system") return theme;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 async function applyMaterial(material: AppearanceSettings["material"]) {
-  if (!isTauri()) return;
-  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  document.documentElement.dataset.material = material;
+  if (!isTauriRuntime()) return;
+  const { Effect, getCurrentWindow } = await import("@tauri-apps/api/window");
   const appWindow = getCurrentWindow();
   try {
     await appWindow.clearEffects();
     if (material === "mica") {
       await appWindow.setEffects({ effects: [Effect.Mica] });
     } else if (material === "acrylic") {
-      await appWindow.setEffects({ effects: [Effect.Acrylic] });
+      const effectiveTheme = getEffectiveTheme(
+        useSettingStore.getState().appearance.theme,
+      );
+      const acrylicTint: [number, number, number, number] =
+        effectiveTheme === "dark"
+          ? [16, 18, 24, 224]
+          : [246, 249, 255, 126];
+      await appWindow.setEffects({
+        effects: [Effect.Acrylic],
+        color: acrylicTint,
+      });
     }
   } catch (error) {
     console.error("Failed to set window effects", error);
   }
-
-  document.documentElement.dataset.material = material;
 }
 
 async function applyInterfaceFont(fontStr: string) {
@@ -330,7 +339,7 @@ function applyFluidBackground(enabled: boolean, intensity: number) {
  * 这里控制的是：closeToTray=false 时，前端收到 app-background 事件后真正退出
  */
 async function applyCloseToTray(enabled: boolean) {
-  if (!isTauri()) return;
+  if (!isTauriRuntime()) return;
   // 将设置同步给 Rust 端，通过 dataset 标记，App.tsx 的 app-background 监听器读取此值
   document.documentElement.dataset.closeToTray = enabled ? "true" : "false";
 }
@@ -338,13 +347,11 @@ async function applyCloseToTray(enabled: boolean) {
 export async function initSettings() {
   await useSettingStore.getState().loadSettings();
 
-  const { appearance, performance: _perf, system, playback } = (() => {
+  const { appearance, system } = (() => {
     const s = useSettingStore.getState();
     return {
       appearance: s.appearance,
-      performance: s.appearance.performance,
       system: s.system,
-      playback: s.playback,
     };
   })();
 
@@ -366,6 +373,7 @@ export async function initSettings() {
   mq.addEventListener("change", () => {
     if (useSettingStore.getState().appearance.theme === "system") {
       applyTheme("system");
+      applyMaterial(useSettingStore.getState().appearance.material);
     }
   });
 
@@ -375,6 +383,7 @@ export async function initSettings() {
 
     if (state.appearance.theme !== prevState.appearance.theme) {
       applyTheme(state.appearance.theme);
+      applyMaterial(state.appearance.material);
     }
     if (state.appearance.material !== prevState.appearance.material) {
       applyMaterial(state.appearance.material);

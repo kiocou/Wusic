@@ -6,18 +6,20 @@ import {
   ParseLyric,
   ParseVerbatimLyric,
 } from "@/lib/utils/lyric-parser";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, forwardRef } from "react";
+import React from "react";
 import { flushSync } from "react-dom";
 import {
   motion,
   MotionValue,
   useMotionTemplate,
   useMotionValue,
-  useSpring,
   useTransform,
 } from "framer-motion";
 import { smoothLinear, springShared } from "@/styles/animations";
-
+import { YeeButton } from "../yee-button";
+import SFIcon from "@bradleyhodges/sfsymbols-react";
+import { sfTranslate, sfCharacterPhonetic } from "@bradleyhodges/sfsymbols";
 const LYRIC_CROLL_DELAY = 0.04;
 const LYRIC_FOCUS_RATIO = 0.42;
 
@@ -277,7 +279,7 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
           className="w-full flex flex-col items-start "
           style={{ fontFamily: "var(--app-lyric-font-family, inherit)" }}
         >
-          {lyric?.map((lyricLine, idx) => {
+          {lyric?.length ? lyric.map((lyricLine, idx) => {
             const inWindow =
               Math.abs(idx - visualIndex) <= 10 ||
               Math.abs(idx - currentIndex) <= 5;
@@ -319,7 +321,16 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
                 inWindow={inWindow}
               />
             );
-          })}
+          }) : (
+            <div className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-3 px-6 text-center text-white/55">
+              <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm">
+                暂无歌词
+              </div>
+              <p className="max-w-sm text-xs text-white/35">
+                当前歌曲没有可用歌词，播放时仍会保持封面与控制体验。
+              </p>
+            </div>
+          )}
           <div className="w-full h-[50vh] shrink-0 pointer-events-none" />
         </motion.div>
       </div>
@@ -335,6 +346,8 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
               showTrans &&
                 "bg-white/60 text-black/80 hover:bg-white/80 hover:text-black/60",
             )}
+            aria-label={showTrans ? "隐藏翻译歌词" : "显示翻译歌词"}
+            title={showTrans ? "隐藏翻译歌词" : "显示翻译歌词"}
             onClick={() => {
               flushSync(() => {
                 setIsLayoutChanging(true);
@@ -375,6 +388,8 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
               showRoma &&
                 "bg-white/60 text-black/80 hover:bg-white/80 hover:text-black/60",
             )}
+            aria-label={showRoma ? "隐藏罗马音歌词" : "显示罗马音歌词"}
+            title={showRoma ? "隐藏罗马音歌词" : "显示罗马音歌词"}
             onClick={() => {
               flushSync(() => {
                 setIsLayoutChanging(true);
@@ -405,12 +420,6 @@ export function LyricSheetSongLyric({ className }: { className?: string }) {
     </div>
   );
 }
-
-import { forwardRef } from "react";
-import React from "react";
-import { YeeButton } from "../yee-button";
-import SFIcon from "@bradleyhodges/sfsymbols-react";
-import { sfTranslate, sfCharacterPhonetic } from "@bradleyhodges/sfsymbols";
 
 export const SongLyricLine = forwardRef<
   HTMLDivElement,
@@ -458,64 +467,38 @@ export const SongLyricLine = forwardRef<
     const seek = usePlayerStore((s) => s.seek);
 
     function handleClick() {
+      if (duration <= 0) return;
       seek((lyricLine.lineStart / (duration * 1000)) * 100);
     }
 
     const hasWords = lyricLine.words && lyricLine.words.length > 0;
 
-    // y 位移动画曲线
-    const yTransition = isLayoutChanging
-      ? {
+    // y 位移动画曲线 - 使用统一的简化配置
+    const isAnimating = isLayoutChanging || isLargeJump;
+    const baseYTransition = {
+      type: "spring" as const,
+      stiffness: isAnimating ? 100 : 80,
+      damping: isAnimating ? 18 : 22,
+      mass: isAnimating ? 0.5 : 0.9,
+    };
+    const yTransition = isScrolling
+      ? { type: "tween" as const, duration: 0, ease: "linear" as const }
+      : isLayoutChanging
+        ? { ...baseYTransition, delay: 0 }
+        : isLargeJump
+          ? { ...baseYTransition, delay: 0 }
+          : { ...baseYTransition, delay: scrollDelay };
+
+    // layout 动画曲线 - 简化减少计算量
+    const layoutTransition = isScrolling
+      ? { duration: 0 }
+      : {
           type: "spring" as const,
           stiffness: 120,
-          damping: 20,
-          mass: 0.8,
-          delay: 0,
-        }
-      : isScrolling
-        ? { type: "tween" as const, duration: 0, ease: "linear" as const }
-        : isLargeJump
-          ? {
-              type: "spring" as const,
-              stiffness: 120,
-              damping: 20,
-              mass: 0.5,
-              delay: 0,
-            }
-          : {
-              type: "spring" as const,
-              stiffness: 120,
-              damping: 20,
-              mass: 0.8,
-              delay: scrollDelay,
-            };
-
-    // layout 动画曲线
-    const layoutTransition = isLayoutChanging
-      ? {
-          type: "spring" as const,
-          stiffness: 170,
-          damping: 26,
-          mass: 0.8,
-          delay: 0,
-        }
-      : isScrolling
-        ? { type: "tween" as const, duration: 0, ease: "linear" as const }
-        : isLargeJump
-          ? {
-              type: "spring" as const,
-              stiffness: 120,
-              damping: 20,
-              mass: 0.5,
-              delay: 0,
-            }
-          : {
-              type: "spring" as const,
-              stiffness: 120,
-              damping: 20,
-              mass: 0.8,
-              delay: scrollDelay,
-            };
+          damping: 24,
+          mass: 0.9,
+          delay: isLayoutChanging ? 0 : scrollDelay,
+        };
 
     if (!inWindow) {
       return (

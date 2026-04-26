@@ -21,6 +21,7 @@ interface YeeSliderProps extends Omit<
   rangeClassName?: string;
   showThumb?: boolean;
   onValueChange: (value: number) => void;
+  tooltipFormatter?: (value: number) => string;
 }
 
 function YeeSlider({
@@ -34,6 +35,7 @@ function YeeSlider({
   rangeClassName,
   showThumb = true,
   onValueChange,
+  tooltipFormatter,
   ...props
 }: YeeSliderProps) {
   const _values = React.useMemo(
@@ -66,11 +68,14 @@ function YeeSlider({
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onValueChange={(value) => {
+          const nextValue = Math.min(Math.max(value[0], min), max);
           setIsDragging(true);
-          setDragValue(value[0]);
+          setDragValue(nextValue);
         }}
         onValueCommit={(value) => {
-          onValueChange(value[0]);
+          const nextValue = Math.min(Math.max(value[0], min), max);
+          onValueChange(nextValue);
+          setDragValue(nextValue);
           setIsDragging(false);
         }}
       >
@@ -102,7 +107,11 @@ function YeeSlider({
                 className="bg-card text-foreground drop-shadow-md"
                 sideOffset={10}
               >
-                <p>{tooltip ?? (Array.isArray(value) ? value[0] : value)}</p>
+                <p>
+                  {tooltipFormatter
+                    ? tooltipFormatter(isDragging ? dragValue : _values[index])
+                    : tooltip ?? (Array.isArray(value) ? value[0] : value)}
+                </p>
               </TooltipContent>
             </Tooltip>
           ))}

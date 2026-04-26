@@ -23,6 +23,7 @@ import { useUserStore } from "@/lib/store/userStore";
 import { subArtist } from "@/lib/services/user";
 import { toast } from "sonner";
 import { BlurLayer } from "@/components/blur-layer";
+import { StatePanel } from "@/components/ui/state-panel";
 
 function ArtistContent() {
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +53,6 @@ function ArtistContent() {
       try {
         const res = await getArtistDetail(id);
         setArtist(res);
-        console.log("artist data:", res);
       } catch (err) {
         console.error(err);
       } finally {
@@ -87,7 +87,13 @@ function ArtistContent() {
       case "album":
         return <ArtistAlbum artistId={artist!.id} searchQuery={searchQuery} />;
       case "mv":
-        return <div>开发中...</div>;
+        return (
+          <StatePanel
+            compact
+            title="MV 暂未接入"
+            description="当前版本先提供清晰状态反馈，后续接入 MV 数据后会在这里展示作品列表。"
+          />
+        );
       case "desc":
         return <ArtistDesc artistId={artist!.id} />;
       case "similar":

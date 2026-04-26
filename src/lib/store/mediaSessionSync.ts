@@ -1,8 +1,12 @@
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import { usePlayerStore } from "./playerStore";
+import { isTauriRuntime } from "@/lib/tauri";
 
-export function initMediaSession() {
+export async function initMediaSession() {
+  if (!isTauriRuntime()) return;
+
+  const { invoke } = await import("@tauri-apps/api/core");
+  const { listen } = await import("@tauri-apps/api/event");
+
   // 歌曲变化时 → 通知 Rust 更新 SMTC 元数据
   usePlayerStore.subscribe(
     (state) => state.currentSong,

@@ -79,9 +79,6 @@ async function resolveByKugou(song: Song): Promise<string | null> {
     const { hash, album_id } = firstHit;
 
     // Step 2: 用 hash 获取播放 URL
-    const urlRes = await fetchWithTimeout(
-      `https://www.kugou.com/song/#hash=${hash}&album_id=${album_id}`,
-    );
     // 酷狗直链通过另一接口获取
     const playRes = await fetchWithTimeout(
       `https://trackercdnbj.kugou.com/i/v2/?cmd=25&hash=${hash}&key=${hash}&appid=1005&pid=2&album_id=${album_id}&album_audio_id=${album_id}`,
@@ -264,15 +261,37 @@ export async function resolveAudioUrl(
     { name: "bilibili", fn: () => resolveByBilibili(song) },
   ];
 
-  // 并行发起，但只取第一个成功的
-  const result = await Promise.any(
-    externalSources.map(async ({ name, fn }) => {
-      const url = await fn();
-      if (!url) throw new Error(`${name} failed`);
-      console.log(`[音源] ${name} 成功`);
-      return { url, source: name } as ResolveResult;
-    }),
-  ).catch(() => null);
+  // 并行发起，但只取第一个成功的；保持 ES2020 目标，不依赖 Promise.any。
+  const result = await firstSuccessfulSource(externalSources);
 
   return result;
+}
+
+function firstSuccessfulSource(
+  sources: Array<{ name: string; fn: () => Promise<string | null> }>,
+): Promise<ResolveResult | null> {
+  return new Promise((resolve) => {
+    let pending = sources.length;
+    let settled = false;
+
+    if (pending === 0) {
+      resolve(null);
+      return;
+    }
+
+    for (const { name, fn } of sources) {
+      fn()
+        .then((url) => {
+          if (!url || settled) return;
+          settled = true;
+          console.log(`[音源] ${name} 成功`);
+          resolve({ url, source: name });
+        })
+        .catch(() => null)
+        .finally(() => {
+          pending -= 1;
+          if (pending === 0 && !settled) resolve(null);
+        });
+    }
+  });
 }

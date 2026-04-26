@@ -115,7 +115,7 @@ export function Popover({ trigger, children, className }: PopoverProps) {
             style={getPopoverStyle()}
             className={cn(
               "flex flex-col gap-1 p-2",
-              "bg-card/95 backdrop-blur-md rounded-md border shadow-2xl",
+              "bg-[var(--floating-surface)] backdrop-blur-md rounded-md border border-[var(--floating-surface-border)] shadow-2xl",
               "animate-in fade-in-0 zoom-in-95 duration-150",
               className,
             )}

@@ -1,5 +1,13 @@
 import { Howl } from "howler";
 
+type CorePlayerCallbacks = {
+  onEnd: () => void;
+  onPlay: (duration: number) => void;
+  onProgress?: (currentTime: number) => void;
+  onLoadError?: (error: unknown) => void;
+  onPlayError?: (error: unknown) => void;
+};
+
 class CorePlayer {
   private howl: Howl | null = null;
   private rafId: number | null = null;
@@ -18,13 +26,9 @@ class CorePlayer {
     this.crossfadeDuration = duration;
   }
 
-  // 播放歌曲
-  play(
-    url: string,
-    onEnd: () => void,
-    onPlay: (duration: number) => void,
-    onProgress?: (currentTime: number) => void,
-  ) {
+  play(url: string, callbacks: CorePlayerCallbacks) {
+    const { onEnd, onPlay, onProgress, onLoadError, onPlayError } = callbacks;
+
     // 如果开启了淡出，先把当前曲目淡出再切换
     if (this.crossfadeEnabled && this.howl && this.howl.playing()) {
       const fadingOut = this.howl;
@@ -55,13 +59,26 @@ class CorePlayer {
         this.startProgressLoop();
       },
       onpause: () => this.stopProgressLoop(),
+      onstop: () => this.stopProgressLoop(),
       onend: () => {
         this.stopProgressLoop();
         onEnd();
       },
+      onloaderror: (_id, error) => {
+        this.stopProgressLoop();
+        onLoadError?.(error);
+      },
+      onplayerror: (_id, error) => {
+        this.stopProgressLoop();
+        onPlayError?.(error);
+      },
     });
 
-    this.howl?.play();
+    const playId = this.howl.play();
+    if (playId === null) {
+      this.stopProgressLoop();
+      onPlayError?.(new Error("Howler failed to start playback"));
+    }
   }
 
   private startProgressLoop() {
@@ -95,26 +112,57 @@ class CorePlayer {
   }
 
   resume() {
-    this.howl?.play();
+    if (!this.howl) return false;
+    const playId = this.howl.play();
+    return playId !== null;
+  }
+
+  stop(unload = false) {
+    this.stopProgressLoop();
+    if (!this.howl) return;
+
+    this.howl.stop();
+    if (unload) {
+      this.howl.unload();
+      this.howl = null;
+    }
   }
 
   seek(per: number) {
-    if (!this.howl) return;
+    if (!this.howl) return 0;
 
-    const time = this.howl.duration() * per;
+    const duration = this.howl.duration();
+    if (!Number.isFinite(duration) || duration <= 0) return 0;
+
+    const safePercent = Math.min(Math.max(per, 0), 1);
+    const time = duration * safePercent;
     this.howl.seek(time);
+    return time;
   }
 
   setVolume(val: number) {
-    this.howl?.volume(val);
+    const safeVolume = Math.min(Math.max(val, 0), 1);
+    this.howl?.volume(safeVolume);
   }
 
   getPosition() {
-    return this.howl?.seek() || 0;
+    const position = this.howl?.seek();
+    return typeof position === "number" && Number.isFinite(position)
+      ? position
+      : 0;
+  }
+
+  getDuration() {
+    const duration = this.howl?.duration() || 0;
+    return Number.isFinite(duration) ? duration : 0;
   }
 
   isReady() {
     return this.howl !== null;
+  }
+
+  isPlaying() {
+    return this.howl?.playing() || false;
   }
 }
 

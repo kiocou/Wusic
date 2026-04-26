@@ -4,6 +4,14 @@ import { QUALITY_BY_KEY, QualityKey } from "@/lib/constants/song";
 import { getSongUrl } from "@/lib/services/song";
 import { corePlayer } from "@/lib/player/corePlayer";
 
+function getSafeProgress(currentTime: number, duration: number) {
+  if (!Number.isFinite(currentTime) || !Number.isFinite(duration) || duration <= 0) {
+    return 0;
+  }
+
+  return Math.min(Math.max((currentTime / duration) * 100, 0), 100);
+}
+
 export const createSongInfoSlice: StateCreator<
   SharedPlayerState,
   [],
@@ -32,19 +40,29 @@ export const createSongInfoSlice: StateCreator<
       );
 
       if (res?.[0]?.url) {
-        corePlayer.play(
-          res?.[0]?.url,
-          () => get().next(),
-          (duration) => {
+        corePlayer.play(res[0].url, {
+          onEnd: () => get().next(),
+          onPlay: (duration) => {
             set({ isPlaying: true, duration, isLoadingMusic: false });
-            get().seek((currentTime / duration) * 100);
+            if (duration > 0) {
+              get().seek((currentTime / duration) * 100);
+            }
           },
-          (currentTime) => {
+          onProgress: (currentTime) => {
             const { duration } = get();
-            const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-            set({ currentTime, progress });
+            set({ currentTime, progress: getSafeProgress(currentTime, duration) });
           },
-        );
+          onLoadError: (error) => {
+            console.error("切换音质后加载失败", error);
+            set({ isPlaying: false, isLoadingMusic: false });
+          },
+          onPlayError: (error) => {
+            console.error("切换音质后播放失败", error);
+            set({ isPlaying: false, isLoadingMusic: false });
+          },
+        });
+      } else {
+        set({ isLoadingMusic: false });
       }
     } catch (err) {
       console.log("切换音质失败", err);

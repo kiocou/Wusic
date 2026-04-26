@@ -7,7 +7,6 @@ import {
   Play24Filled,
   Previous24Filled,
   SlideSize24Regular,
-  Resize24Regular,
 } from "@fluentui/react-icons";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { GetThumbnail, cn } from "@/lib/utils";
@@ -32,31 +31,36 @@ import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 import { useSongLogic } from "@/hooks/use-song-logic";
 import { AnimatedArtwork } from "@/pages/player/AnimatedArtwork";
 import { PLAYER_LAYOUT_IDS, springShared } from "@/styles/animations";
-import { LayoutGroup, motion } from "framer-motion";
-import { useMiniMode } from "@/hooks/useMiniMode";
+import { motion } from "framer-motion";
 
 export function PlayerBar() {
   return (
-    <LayoutGroup id="yee-playback-shared-transition">
-      <div
-        className="w-full h-20 grid grid-cols-3 relative bg-card/60 border-t"
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        <LeftButtonRegion />
+    <div
+      className="w-full h-20 grid grid-cols-3 relative border-t transition-[background,border-color,box-shadow,backdrop-filter] duration-300"
+      style={{
+        background: "var(--playerbar-bg)",
+        borderTopColor: "var(--playerbar-border)",
+        boxShadow: "var(--playerbar-shadow)",
+        backdropFilter: "var(--playerbar-blur)",
+        WebkitBackdropFilter: "var(--playerbar-blur)",
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <LeftButtonRegion />
 
-        <CenterButtonRegion />
+      <CenterButtonRegion />
 
-        <RightButtonRegion />
+      <RightButtonRegion />
 
-        <PlayerBarSlider />
-      </div>
-    </LayoutGroup>
+      <PlayerBarSlider />
+    </div>
   );
 }
 
 function LeftButtonRegion() {
   const { checkIsLiked, handleLike } = useSongLogic();
   const currentSong = usePlayerStore((s) => s.currentSong);
+  const currentArtists = currentSong?.ar ?? currentSong?.artists ?? [];
 
   const isLike = checkIsLiked("song", currentSong);
   const LikeIcon = isLike ? Heart24Filled : Heart24Regular;
@@ -99,14 +103,14 @@ function LeftButtonRegion() {
               transition={springShared}
               className="line-clamp-1 transform-gpu will-change-transform"
             >
-              {currentSong?.ar?.map((ar, idx) => (
+              {currentArtists.map((ar, idx) => (
                 <Link
                   to={`/detail/artist?id=${ar.id}`}
                   key={`${ar.id}-${idx}`}
                   className="text-sm text-foreground/60 hover:text-foreground/80"
                 >
                   {ar.name}
-                  {idx < currentSong!.ar!.length - 1 && "、"}
+                  {idx < currentArtists.length - 1 && "、"}
                 </Link>
               ))}
             </motion.div>
@@ -124,7 +128,7 @@ function LeftButtonRegion() {
         </>
       ) : (
         <div className="w-12 h-12 rounded-sm overflow-hidden border shadow-sm flex justify-center items-center">
-          <SFIcon icon={sfBrandItunesNote} className="size-5 text-black/40" />
+          <SFIcon icon={sfBrandItunesNote} className="size-5 text-foreground/40" />
         </div>
       )}
     </div>
@@ -137,6 +141,8 @@ function CenterButtonRegion() {
 
   const isLoadingMusic = usePlayerStore((s) => s.isLoadingMusic);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const currentSong = usePlayerStore((s) => s.currentSong);
+  const playlistLength = usePlayerStore((s) => s.playlist.length);
   const repeatMode = usePlayerStore((s) => s.repeatMode);
   const isShuffle = usePlayerStore((s) => s.isShuffle);
   const isFmMode = usePlayerStore((s) => s.isFmMode);
@@ -148,7 +154,8 @@ function CenterButtonRegion() {
   const repeatModeConfig = REPEAT_MODE_CONFIG[repeatMode];
   const shuffleConfig = SHUFFLE_CONFIG[isShuffle ? "on" : "off"];
 
-  const canShuffle = repeatModeConfig.canShuffle;
+  const canShuffle = repeatModeConfig.canShuffle && playlistLength > 1;
+  const canUsePlaybackControls = Boolean(currentSong);
 
   return (
     <div className=" flex items-center justify-center gap-4 shrink-0">
@@ -157,19 +164,27 @@ function CenterButtonRegion() {
         disabled={!canShuffle || isFmMode}
         onClick={toggleShuffleMode}
         icon={<shuffleConfig.icon className="size-4" />}
+        aria-label={isShuffle ? "关闭随机播放" : "开启随机播放"}
+        title={isShuffle ? "关闭随机播放" : "开启随机播放"}
       />
 
       {isFmMode ? (
         <YeeButton
           variant="ghost"
           onClick={trashFmSong}
+          disabled={!canUsePlaybackControls}
           icon={<SFIcon icon={sfHeartSlashFill} className="size-5" />}
+          aria-label="不喜欢这首私人漫游"
+          title="不喜欢"
         />
       ) : (
-        <YeeButton
-          variant="ghost"
-          onClick={prev}
-          icon={<Previous24Filled className="size-5" />}
+          <YeeButton
+            variant="ghost"
+            onClick={prev}
+            disabled={!canUsePlaybackControls}
+            icon={<Previous24Filled className="size-5" />}
+          aria-label="上一首"
+          title="上一首"
         />
       )}
 
@@ -186,7 +201,10 @@ function CenterButtonRegion() {
           <YeeButton
             variant="ghost"
             onClick={() => togglePlay()}
+            disabled={!canUsePlaybackControls}
             icon={<PlayIcon className="size-5" />}
+            aria-label={isPlaying ? "暂停" : "播放"}
+            title={isPlaying ? "暂停" : "播放"}
           />
         </motion.div>
       )}
@@ -194,7 +212,10 @@ function CenterButtonRegion() {
       <YeeButton
         variant="ghost"
         onClick={next}
+        disabled={!canUsePlaybackControls}
         icon={<Next24Filled className="size-5" />}
+        aria-label="下一首"
+        title="下一首"
       />
 
       {isFmMode ? (
@@ -207,12 +228,17 @@ function CenterButtonRegion() {
               className="size-4 text-foreground/80"
             />
           }
+          aria-label={fmRepeatMode ? "关闭私人漫游单曲循环" : "开启私人漫游单曲循环"}
+          title={fmRepeatMode ? "关闭单曲循环" : "开启单曲循环"}
         />
       ) : (
         <YeeButton
           variant="ghost"
           onClick={toggleRepeatMode}
+          disabled={!canUsePlaybackControls}
           icon={<repeatModeConfig.icon className="size-4" />}
+          aria-label={`切换循环模式：${repeatModeConfig.desc}`}
+          title={repeatModeConfig.desc}
         />
       )}
     </div>
@@ -222,7 +248,6 @@ function CenterButtonRegion() {
 function RightButtonRegion() {
   const openMenu = useContextMenuStore((s) => s.openMenu);
   const currentSong = usePlayerStore((s) => s.currentSong);
-  const { enterMiniMode } = useMiniMode();
 
   const isFmMode = usePlayerStore((s) => s.isFmMode);
 
@@ -236,18 +261,15 @@ function RightButtonRegion() {
 
       <YeeButton
         variant="ghost"
-        onClick={() => enterMiniMode()}
-        icon={<Resize24Regular className="size-5" />}
-        title="进入 Mini 播放器"
-      />
-
-      <YeeButton
-        variant="ghost"
+        disabled={!currentSong}
         onClick={(e) => {
+          if (!currentSong) return;
           e.preventDefault();
           openMenu(e.clientX, e.clientY, "song", currentSong);
         }}
         icon={<MoreHorizontal20Regular className="size-5" />}
+        aria-label="更多操作"
+        title="更多"
       />
     </div>
   );

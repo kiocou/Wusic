@@ -20,6 +20,15 @@ interface SearchSuggestResponse {
   };
 }
 
+interface SearchHotDetailResponse {
+  code: number;
+  data: Array<{
+    searchWord: string;
+    score?: number;
+    content?: string;
+  }>;
+}
+
 interface SearchResponse {
   code: number;
   result: {
@@ -47,6 +56,11 @@ export async function getSearchSuggest(keywords: string) {
 
   if (!res.result.allMatch) return [];
   return res.result.allMatch.map((item) => item.keyword);
+}
+
+export async function getSearchHotDetail() {
+  const res = await api.get<SearchHotDetailResponse>("/search/hot/detail");
+  return res.data ?? [];
 }
 
 export interface SearchParams {

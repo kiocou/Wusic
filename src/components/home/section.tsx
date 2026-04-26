@@ -6,6 +6,7 @@ import {
 } from "@fluentui/react-icons";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { YeeButton } from "../yee-button";
+import { motion } from "framer-motion";
 
 interface SectionProps {
   title: string;
@@ -151,51 +152,77 @@ export function Section({
   };
 
   return (
-    <section className="flex flex-col gap-4">
+    <motion.section 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+      className="flex flex-col gap-6"
+    >
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">
+        <motion.h2 
+          className="text-2xl font-bold tracking-tight"
+          whileHover={seeMore ? { x: 4 } : undefined}
+          transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+        >
           <div
-            className={`flex items-center gap-2 group transform transition duration-300 ease-in-out  ${
+            className={`flex items-center gap-2 group transform transition-all duration-300 ease-out ${
               seeMore
-                ? "cursor-pointer hover:bg-foreground/5 rounded-md hover:translate-x-2 px-2 py-1 -ml-2 -mt-1"
+                ? "cursor-pointer hover:bg-foreground/5 rounded-md px-3 py-1.5 -ml-3 -mt-1.5"
                 : ""
             }`}
           >
             {title}
             {seeMore && (
-              <ChevronRight24Regular className="size-5 text-foreground/60 group-hover:mr-1" />
+              <motion.div
+                className="inline-flex"
+                whileHover={{ x: 4 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronRight24Regular className="size-5 text-foreground/60" />
+              </motion.div>
             )}
           </div>
-        </h2>
+        </motion.h2>
 
-        <div className="flex gap-2 text-black/60 items-center">
+        <div className="flex gap-3 items-center">
           {hasOverflow && (
             <>
-              <YeeButton
-                variant="ghost"
-                icon={<CaretLeft24Filled className="size-3" />}
-                className="size-6 rounded-full bg-card border! border-border! text-muted-foreground hover:text-muted-foreground"
-                onClick={handlePrev}
-                disabled={!canScrollPrev}
-              />
-              <YeeButton
-                variant="ghost"
-                icon={<CaretRight24Filled className="size-3" />}
-                className="size-6 rounded-full bg-card border! border-border! text-muted-foreground hover:text-muted-foreground"
-                onClick={handleNext}
-                disabled={!canScrollNext}
-              />
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} transition={{ duration: 0.1 }}>
+                <YeeButton
+                  variant="ghost"
+                  icon={<CaretLeft24Filled className="size-4" />}
+                  className="size-8 rounded-full bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 ease-out transform-gpu"
+                  onClick={handlePrev}
+                  disabled={!canScrollPrev}
+                />
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} transition={{ duration: 0.1 }}>
+                <YeeButton
+                  variant="ghost"
+                  icon={<CaretRight24Filled className="size-4" />}
+                  className="size-8 rounded-full bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 ease-out transform-gpu"
+                  onClick={handleNext}
+                  disabled={!canScrollNext}
+                />
+              </motion.div>
             </>
           )}
           {refresh && (
-            <ArrowClockwise24Regular className="size-5 hover:text-gray-700 cursor-pointer" />
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9, rotate: -180 }} transition={{ duration: 0.15 }}>
+              <YeeButton
+                variant="ghost"
+                icon={<ArrowClockwise24Regular className="size-5" />}
+                className="size-8 rounded-full bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 ease-out"
+              />
+            </motion.div>
           )}
         </div>
       </div>
 
       <div
         ref={containerRef}
-        className="flex w-full gap-8 overflow-x-auto scroll-smooth *:shrink-0 [&::-webkit-scrollbar]:hidden"
+        className="flex w-full gap-6 overflow-x-auto scroll-smooth *:shrink-0 [&::-webkit-scrollbar]:hidden"
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -203,6 +230,6 @@ export function Section({
       >
         {children}
       </div>
-    </section>
+    </motion.section>
   );
 }

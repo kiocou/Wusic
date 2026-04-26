@@ -11,6 +11,7 @@ import { useDownloadStore } from "@/lib/store/downloadStore";
 import { DownloadedSong, DownloadTask } from "@/lib/types";
 import {
   ArrowDownload24Regular,
+  Delete24Regular,
   Document24Regular,
   Folder24Regular,
   Pause24Filled,
@@ -19,8 +20,9 @@ import {
 import { useContextMenuStore } from "@/lib/store/contextMenuStore";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { YeeButton } from "@/components/yee-button";
-import { openPath } from "@tauri-apps/plugin-opener";
 import { BlurLayer } from "@/components/blur-layer";
+import { toast } from "sonner";
+import { isTauriRuntime } from "@/lib/tauri";
 
 const VALID_TABS = ["downloaded", "downloading"] as const;
 type TabValue = (typeof VALID_TABS)[number];
@@ -33,6 +35,16 @@ function formatBytes(bytes: number): string {
 function formatSpeed(bps: number): string {
   if (bps >= 1024 * 1024) return `${(bps / 1024 / 1024).toFixed(1)} MB/s`;
   return `${(bps / 1024).toFixed(0)} KB/s`;
+}
+
+async function openSystemPath(path: string) {
+  if (!isTauriRuntime()) {
+    toast.info("浏览器预览环境不支持打开本地路径，请在桌面端使用。");
+    return;
+  }
+
+  const { openPath } = await import("@tauri-apps/plugin-opener");
+  await openPath(path);
 }
 
 function DownloadedList() {
@@ -66,6 +78,7 @@ function DownloadedSongRow({
   index,
   item,
   className,
+  onRemove,
 }: {
   index: number;
   item: DownloadedSong;
@@ -85,7 +98,7 @@ function DownloadedSongRow({
   return (
     <div
       className={cn(
-        "group items-center p-3 rounded-md hover:bg-foreground/8 transition-colors grid grid-cols-[32px_1fr_1fr_1fr_1fr]",
+        "group items-center p-3 rounded-md hover:bg-foreground/8 transition-colors grid grid-cols-[32px_1fr_1fr_1fr_1fr_76px]",
         index % 2 === 0 ? "bg-foreground/5" : "",
         className,
       )}
@@ -133,6 +146,33 @@ function DownloadedSongRow({
         <span className="uppercase font-mono bg-foreground/8 px-1.5 py-0.5 rounded">
           {fileType}
         </span>
+      </div>
+
+      <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <YeeButton
+          variant="ghost"
+          icon={<Folder24Regular className="size-4" />}
+          aria-label="打开下载文件"
+          title="打开文件"
+          onClick={async (event) => {
+            event.stopPropagation();
+            try {
+              await openSystemPath(item.savePath);
+            } catch (error) {
+              toast.error(`打开文件失败：${error}`);
+            }
+          }}
+        />
+        <YeeButton
+          variant="ghost"
+          icon={<Delete24Regular className="size-4" />}
+          aria-label="从下载记录移除"
+          title="移除记录"
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+        />
       </div>
     </div>
   );
@@ -290,7 +330,17 @@ function DownloadPageContent() {
           <YeeButton
             icon={<Folder24Regular />}
             variant="outline"
-            onClick={() => openPath(downloadDir)}
+            disabled={!downloadDir}
+            aria-label="打开下载目录"
+            title={downloadDir ? "打开下载目录" : "未设置下载目录"}
+            onClick={async () => {
+              if (!downloadDir) return;
+              try {
+                await openSystemPath(downloadDir);
+              } catch (error) {
+                toast.error(`打开下载目录失败：${error}`);
+              }
+            }}
           />
         </div>
       </div>

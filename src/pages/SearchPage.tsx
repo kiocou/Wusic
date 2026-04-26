@@ -1,3 +1,8 @@
+/**
+ * 搜索页面组件
+ * 提供歌曲、歌单、歌手、专辑的搜索功能
+ * 支持安全的增量加载和错误处理
+ */
 import { SongList } from "@/components/song/song-list";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSearchResult, type SearchParams } from "@/lib/services/search";
@@ -10,6 +15,9 @@ import { ArtistList } from "@/components/artist/artist-list";
 import { cn } from "@/lib/utils";
 import { PlaylistList } from "@/components/playlist/playlist-list";
 import { BlurLayer } from "@/components/blur-layer";
+import { StatePanel } from "@/components/ui/state-panel";
+import { Button } from "@/components/ui/button";
+import { Search24Regular } from "@fluentui/react-icons";
 
 interface SearchData {
   songs: Song[];
@@ -47,6 +55,8 @@ function SearchContent() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -66,6 +76,7 @@ function SearchContent() {
     setData(EMPTY_DATA);
     setOffset(0);
     setHasMore(true);
+    setError("");
     abortRef.current?.abort();
   }, [query, tabValue]);
 
@@ -82,6 +93,7 @@ function SearchContent() {
 
     async function fetchData() {
       setLoading(true);
+      setError("");
 
       try {
         const res: SearchResult = await getSearchResult(
@@ -93,6 +105,12 @@ function SearchContent() {
           },
           { signal: controller.signal },
         );
+
+        // 安全检查：确保返回的数据结构正确
+        if (!res) {
+          setHasMore(false);
+          return;
+        }
 
         switch (type) {
           case 1: {
@@ -153,7 +171,8 @@ function SearchContent() {
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
-        console.error(err);
+        console.error("搜索数据获取失败:", err);
+        setError("搜索失败，请检查网络后重试。");
         setHasMore(false);
       } finally {
         if (!controller.signal.aborted) {
@@ -167,7 +186,7 @@ function SearchContent() {
     return () => {
       controller.abort();
     };
-  }, [query, type, offset]);
+  }, [query, type, offset, reloadToken]);
 
   useEffect(() => {
     const el = loadMoreRef.current;
@@ -191,6 +210,48 @@ function SearchContent() {
   }, [hasMore, loading]);
 
   const renderContent = () => {
+    if (!query) {
+      return (
+        <StatePanel
+          icon={<Search24Regular className="size-6" />}
+          title="输入关键词开始搜索"
+          description="可以搜索单曲、歌单、歌手和专辑，结果会自动按当前标签分类展示。"
+        />
+      );
+    }
+
+    if (error && !loading) {
+      return (
+        <StatePanel
+          icon={<Search24Regular className="size-6" />}
+          title="搜索出错"
+          description={error}
+          action={
+            <Button
+              variant="outline"
+              onClick={() => {
+                setError("");
+                setHasMore(true);
+                setReloadToken((value) => value + 1);
+              }}
+            >
+              重试
+            </Button>
+          }
+        />
+      );
+    }
+
+    if (!loading && currentLength === 0 && !hasMore) {
+      return (
+        <StatePanel
+          icon={<Search24Regular className="size-6" />}
+          title="没有找到匹配结果"
+          description={`换个关键词或切换到其他分类试试。当前搜索：${query}`}
+        />
+      );
+    }
+
     switch (tabValue) {
       case "1":
         return <SongList songList={data.songs} showAlbum={true} />;
@@ -237,7 +298,7 @@ function SearchContent() {
       <div ref={loadMoreRef} className="flex justify-center mt-8">
         {loading && <Loading />}
         {!loading && !hasMore && currentLength > 0 && (
-          <span className="text-black/60">没有更多了</span>
+          <span className="text-muted-foreground">没有更多了</span>
         )}
       </div>
     </div>

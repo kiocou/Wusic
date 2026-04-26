@@ -24,17 +24,31 @@ export default function SettingsExpandar({
   const [showDetail, setShowDetail] = useState(false);
 
   const hasDetail = children ? true : false;
+  const toggleDetail = () => {
+    if (!hasDetail) return;
+    setShowDetail((show) => !show);
+  };
 
   return (
     <div className="flex flex-col w-full gap-0">
       <div
         className={cn(
-          "flex flex-col gap-2 w-full bg-card border rounded-sm p-4 ",
+          "flex flex-col gap-2 w-full bg-[var(--control-surface)] border border-[var(--floating-surface-border)] rounded-sm p-4 backdrop-blur-md transition-[background,border-color,transform] duration-200",
           showDetail && "rounded-b-none",
-          hasDetail && "hover:bg-card/40",
+          hasDetail && "cursor-pointer hover:bg-[var(--floating-surface)] active:scale-[0.995]",
           className,
         )}
-        onClick={() => setShowDetail((show) => !show)}
+        role={hasDetail ? "button" : undefined}
+        tabIndex={hasDetail ? 0 : undefined}
+        aria-expanded={hasDetail ? showDetail : undefined}
+        onClick={toggleDetail}
+        onKeyDown={(event) => {
+          if (!hasDetail) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggleDetail();
+          }
+        }}
       >
         <div className="flex justify-between items-center">
           <div className="flex gap-4 items-center">
@@ -48,7 +62,9 @@ export default function SettingsExpandar({
           </div>
 
           <div className="flex gap-2 items-center">
-            {trailing}
+            {trailing && (
+              <div onClick={(event) => event.stopPropagation()}>{trailing}</div>
+            )}
             {hasDetail && (
               <motion.div
                 animate={{ rotate: showDetail ? 180 : 0 }}
@@ -83,7 +99,7 @@ export default function SettingsExpandar({
 }
 
 interface SettingsExpandarDetailProps {
-  desc?: string;
+  desc?: React.ReactNode;
   trailing?: React.ReactNode;
   children?: React.ReactNode;
 }
@@ -94,8 +110,8 @@ export function SettingsExpandarDetail({
   children,
 }: SettingsExpandarDetailProps) {
   return (
-    <div className="w-full bg-card/40 border border-t-0 p-4 flex items-center justify-between last:rounded-b-sm">
-      <p className="text-sm text-card-foreground">{desc}</p>
+    <div className="w-full bg-[var(--control-surface)] border border-[var(--floating-surface-border)] border-t-0 p-4 flex items-center justify-between last:rounded-b-sm">
+      <div className="text-sm text-card-foreground">{desc}</div>
       {trailing}
       {children}
     </div>

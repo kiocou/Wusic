@@ -51,6 +51,7 @@ export interface PlayerControlSlice {
   ) => void;
   playArtist: (artistId: string) => void;
   togglePlay: () => void;
+  stop: () => void;
   next: () => void;
   prev: () => void;
   updateProgress: () => void;

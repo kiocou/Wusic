@@ -16,7 +16,7 @@
         "title": "Wusic",
         "width": 1440,
         "height": 900,
-        "resizable": false,
+        "resizable": true,
         "fullscreen": false,
         "decorations": false,
         "transparent": true,

@@ -63,11 +63,11 @@ export function AppleTheme() {
             isThemeSwitching
               ? undefined
               : {
-                  scale: isPlaying ? 1.025 : 0.872,
-                  rotateZ: -0.35,
+                  scale: isPlaying ? 1.01 : 0.86,
+                  rotateZ: -0.15,
                 }
           }
-          whileTap={isThemeSwitching ? undefined : { scale: 0.94 }}
+          whileTap={isThemeSwitching ? undefined : { scale: isPlaying ? 0.985 : 0.84 }}
           animate={{
             scale: isPlaying ? 1 : 0.85,
             boxShadow: isPlaying
@@ -83,7 +83,7 @@ export function AppleTheme() {
           <AnimatedArtwork
             src={coverUrl}
             alt={`${currentSong?.name || "Album"} cover`}
-            layoutId={PLAYER_LAYOUT_IDS.artwork}
+            layoutId={PLAYER_LAYOUT_IDS.artworkApple}
             className="h-full w-full rounded-[2.25rem] border border-white/15"
           />
           <div className="pointer-events-none absolute inset-0 rounded-[2.25rem] bg-gradient-to-br from-white/22 via-transparent to-black/30" />

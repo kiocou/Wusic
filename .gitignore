@@ -17,6 +17,10 @@ yee-music-signer-key.json
 .vscode/*
 !.vscode/extensions.json
 .idea
+.claude/
+.playwright-cli/
+SOUL.md
+USER.md
 .DS_Store
 *.suo
 *.ntvs*

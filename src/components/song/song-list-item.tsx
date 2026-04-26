@@ -5,8 +5,9 @@ import { Button } from "../ui/button";
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { Link } from "react-router-dom";
 import { useContextMenuStore } from "@/lib/store/contextMenuStore";
-import React from "react";
+import type React from "react";
 import { AudioLinesIcon } from "./audio-lines-icon";
+import { motion } from "framer-motion";
 
 export function SongListItem({
   song,
@@ -34,13 +35,23 @@ export function SongListItem({
   }
 
   const isPlaying = currentSong?.id === song.id;
+  const album = song.al ?? song.album;
+  const artists = song.ar ?? song.artists ?? [];
+  const coverUrl = album?.picUrl ? GetThumbnail(album.picUrl) : "";
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.25,
+        delay: Math.min(index, 20) * 0.02,
+        ease: [0.32, 0.72, 0, 1],
+      }}
       className={cn(
-        "flex-1 flex flex-col hover:bg-foreground/8 rounded-md",
-        index % 2 === 0 && "bg-foreground/5",
-        "transition-colors duration-300",
+        "flex-1 flex flex-col hover:bg-[var(--row-hover)] rounded-md",
+        index % 2 === 0 && "bg-[var(--row-striped)]",
+        "transition-colors duration-200 transform-gpu will-change-transform",
       )}
       onDoubleClick={() => playSong(song)}
       onDragStart={(e) => e.preventDefault()}
@@ -49,51 +60,65 @@ export function SongListItem({
       <div className={`grid ${gridTemplate} items-center px-4 py-3 group`}>
         <div className="flex gap-4 items-center ">
           {showCover ? (
-            <div className="w-10 h-10 relative rounded-sm overflow-hidden shrink-0 group cursor-pointer border">
-              <img
-                src={GetThumbnail(song.al.picUrl!)}
-                alt={`${song.al?.name}专辑封面`}
-                loading="lazy"
-                decoding="async"
-              />
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="w-10 h-10 relative rounded-sm overflow-hidden shrink-0 group cursor-pointer border transform-gpu"
+            >
+              {coverUrl ? (
+                <img
+                  src={coverUrl}
+                  alt={`${album?.name ?? song.name}专辑封面`}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-foreground/5 text-foreground/40">
+                  <Play24Filled className="size-4" />
+                </div>
+              )}
 
               {!isPlaying && (
                 <div
-                  className="absolute w-10 h-10 left-1/2 top-1/2 -translate-1/2 group-hover:bg-black/50 flex justify-center items-center"
+                  className="absolute inset-0 group-hover:bg-[var(--image-overlay)] flex justify-center items-center transition-all duration-200"
                   onClick={() => playSong(song)}
                 >
-                  <Play24Filled className="opacity-0 group-hover:opacity-100 size-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white transition-opacity" />
+                  <Play24Filled className="opacity-0 group-hover:opacity-100 size-4 text-white transition-all duration-200 scale-75 group-hover:scale-100" />
                 </div>
               )}
               {isPlaying && (
                 <div
-                  className="absolute w-10 h-10 left-1/2 top-1/2 -translate-1/2 bg-black/50 flex justify-center items-center"
+                  className="absolute inset-0 bg-[var(--image-overlay)] flex justify-center items-center"
                   onClick={() => togglePlay()}
                 >
                   <AudioLinesIcon className="text-white" />
                 </div>
               )}
-            </div>
+            </motion.div>
           ) : (
             <div className="size-6 flex items-center justify-center text-foreground/40 relative">
               {!isPlaying && (
                 <>
                   <span className="group-hover:hidden">{index + 1}</span>
-                  <div
+                  <motion.div
+                    whileHover={{ scale: 1.15 }}
                     className="hidden group-hover:flex hover:text-foreground/60 cursor-pointer"
                     onClick={() => playSong(song)}
                   >
                     <Play24Filled className="size-4" />
-                  </div>
+                  </motion.div>
                 </>
               )}
               {isPlaying && (
-                <div
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
                   className="absolute left-1/2 top-1/2 -translate-1/2 text-black cursor-pointer"
                   onClick={() => togglePlay()}
                 >
                   <AudioLinesIcon className="text-foreground/40 hover:text-foreground/60" />
-                </div>
+                </motion.div>
               )}
             </div>
           )}
@@ -103,24 +128,24 @@ export function SongListItem({
         </div>
 
         <div className="line-clamp-1 w-3/4">
-          {song.ar!.map((ar, idx) => (
+          {artists.map((ar, idx) => (
             <Link
               key={`${song.id}-${ar.id}-${idx}`}
               to={`/detail/artist?id=${ar.id}`}
             >
-              <span className="text-foreground/60 hover:text-foreground/80 cursor-pointer text-sm font-medium">
+              <span className="text-foreground/60 hover:text-foreground/80 cursor-pointer text-sm font-medium transition-colors duration-200">
                 {ar.name}
-                {idx < song.ar!.length - 1 && "、"}
+                {idx < artists.length - 1 && "、"}
               </span>
             </Link>
           ))}
         </div>
 
         {showAlbum &&
-          (song.al.name ? (
-            <Link to={`/detail/album?id=${song.al.id}`}>
-              <span className="line-clamp-1 w-3/4 text-foreground/60 hover:text-foreground/80 cursor-pointer text-sm">
-                {song.al.name}
+          (album?.name ? (
+            <Link to={`/detail/album?id=${album.id}`}>
+              <span className="line-clamp-1 w-3/4 text-foreground/60 hover:text-foreground/80 cursor-pointer text-sm transition-colors duration-200">
+                {album.name}
               </span>
             </Link>
           ) : (
@@ -133,16 +158,18 @@ export function SongListItem({
           {formatDuration((song.dt || 1) / 1000)}
         </span>
         <span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-pointer"
-            onClick={handleContextMenu}
-          >
-            <MoreHorizontal24Regular className="size-4" />
-          </Button>
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} transition={{ duration: 0.1 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="cursor-pointer"
+              onClick={handleContextMenu}
+            >
+              <MoreHorizontal24Regular className="size-4" />
+            </Button>
+          </motion.div>
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }

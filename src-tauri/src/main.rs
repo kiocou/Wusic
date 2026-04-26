@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    yee_music_react_tauri_lib::run()
+    wusic_lib::run()
 }

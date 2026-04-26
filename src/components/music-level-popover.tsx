@@ -39,7 +39,7 @@ export function MusicLevelPopover({
         ) : (
           <span
             className={cn(
-              "cursor-pointer bg-card/50 hover:bg-card/30 rounded-md px-2 py-1 text-xs font-bold text-foreground/60 border",
+              "cursor-pointer bg-[var(--control-surface)] hover:bg-[var(--floating-surface)] rounded-md px-2 py-1 text-xs font-bold text-foreground/70 border border-[var(--floating-surface-border)]",
               className,
             )}
           >
@@ -51,7 +51,7 @@ export function MusicLevelPopover({
         side={side}
         sideOffset={sideOffset}
         className={cn(
-          "w-64 rounded-lg bg-card/80 backdrop-blur-md",
+          "w-64 rounded-lg",
           contentClassName,
         )}
       >

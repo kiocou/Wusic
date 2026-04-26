@@ -1,6 +1,7 @@
 import { ChevronRight24Regular } from "@fluentui/react-icons";
 import React, { useEffect, useRef, useState } from "react";
 import { MenuRegistrationContext } from "./global-context-menu";
+import { cn } from "@/lib/utils";
 
 interface ContextMenuButtonProps {
   id: string;
@@ -9,6 +10,7 @@ interface ContextMenuButtonProps {
   onClick?: (e: React.MouseEvent) => void;
   hasSubmenu?: boolean;
   children?: React.ReactNode;
+  disabled?: boolean;
 }
 
 export function ContextMenuSeperator() {
@@ -22,17 +24,19 @@ export function ContextMenuButton({
   onClick,
   hasSubmenu,
   children,
+  disabled = false,
 }: ContextMenuButtonProps) {
   const { activeSubmenuId, setActiveSubmenuId, timeoutRef } = React.useContext(
     MenuRegistrationContext,
   );
   const subMenuRef = useRef<HTMLDivElement>(null);
-  const [positionClass, setPositionClass] = useState("left-full pl-1");
+  const [positionClass, setPositionClass] = useState("left-full pl-2");
   const [topOffset, setTopOffset] = useState("0px");
 
   const showSubmenu = activeSubmenuId === id;
 
   const handleMouseEnter = () => {
+    if (disabled) return;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setActiveSubmenuId(id);
   };
@@ -49,11 +53,11 @@ export function ContextMenuButton({
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      let newPositionClass = "left-full pl-4";
+      let newPositionClass = "left-full pl-2";
       let newTopOffset = "0px";
 
       if (rect.right > viewportWidth) {
-        newPositionClass = "right-full pr-4";
+        newPositionClass = "right-full pr-2";
       }
 
       if (rect.bottom > viewportHeight) {
@@ -64,25 +68,38 @@ export function ContextMenuButton({
       setPositionClass(newPositionClass);
       setTopOffset(newTopOffset);
     } else if (!showSubmenu) {
-      setPositionClass("left-full pl-1");
+      setPositionClass("left-full pl-2");
       setTopOffset("0px");
     }
   }, [showSubmenu]);
 
   return (
     <div
-      className="flex gap-2 p-2 items-center text-sm hover:bg-foreground/5 rounded-md cursor-pointer relative"
-      onClick={onClick}
+      className={cn(
+        "relative flex items-center gap-2 rounded-md p-2 text-sm transition-[background,color,transform] duration-200",
+        disabled
+          ? "cursor-not-allowed text-muted-foreground/50"
+          : "cursor-pointer hover:bg-foreground/8 active:scale-[0.98]",
+      )}
+      aria-disabled={disabled}
+      onClick={(event) => {
+        if (disabled) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        onClick?.(event);
+      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="size flex items-center justify-center">{icon}</div>
+      <div className="flex size-4 items-center justify-center">{icon}</div>
       <span className="line-clamp-1">{content}</span>
-      {hasSubmenu && (
+      {hasSubmenu && !disabled && (
         <ChevronRight24Regular className="size-4 ml-auto text-foreground/60" />
       )}
 
-      {hasSubmenu && showSubmenu && children && (
+      {hasSubmenu && !disabled && showSubmenu && children && (
         <div
           ref={subMenuRef}
           className={`absolute z-99999 cursor-default ${positionClass}`}
@@ -94,7 +111,7 @@ export function ContextMenuButton({
           onMouseLeave={handleMouseLeave}
         >
           <IsolatedSubmenu>
-            <div className="w-48 bg-card border border-border rounded-lg shadow-lg flex flex-col p-2 max-h-[300px] overflow-y-auto">
+            <div className="w-48 bg-[var(--floating-surface)] border border-[var(--floating-surface-border)] rounded-lg shadow-lg flex flex-col p-2 max-h-[300px] overflow-y-auto backdrop-blur-md">
               {children}
             </div>
           </IsolatedSubmenu>

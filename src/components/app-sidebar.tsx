@@ -35,7 +35,6 @@ import {
   Settings20Regular,
   SignOut20Regular,
   PersonEdit20Regular,
-  Ribbon20Regular,
   Home20Regular,
   Home20Filled,
   ArrowDownload20Regular,
@@ -44,16 +43,14 @@ import {
   Folder20Filled,
   Clock20Regular,
   Clock20Filled,
-  Cloud20Regular,
   Heart20Filled,
   Heart20Regular,
   List20Regular,
-  Cloud20Filled,
   Add20Regular,
   ChevronRight24Regular,
 } from "@fluentui/react-icons";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LoginForm } from "./modal/login-form";
 import { useUserStore } from "@/lib/store/userStore";
 import { LogoutForm } from "./modal/logout-form";
@@ -89,13 +86,25 @@ const libraryItems = [
     icon: Folder20Regular,
     activeIcon: Folder20Filled,
   },
-  {
-    title: "网盘",
-    url: "/library/cloud",
-    icon: Cloud20Regular,
-    activeIcon: Cloud20Filled,
-  },
 ];
+
+const sidebarLabelClass =
+  "text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-text-faint)] mb-1 px-2";
+const sidebarSeparatorClass = "mx-3! my-2! bg-[var(--sidebar-divider)]";
+const sidebarActiveIconClass = "size-5 text-[var(--sidebar-accent-strong)]";
+const sidebarActiveRailClass =
+  "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[var(--sidebar-accent-strong)] rounded-r-full";
+const sidebarSubtleButtonClass =
+  "text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text-strong)] hover:bg-[var(--sidebar-item-hover-bg)]";
+
+function sidebarItemClass(active: boolean) {
+  return cn(
+    "relative overflow-hidden transition-all duration-200",
+    active
+      ? "font-semibold text-[var(--sidebar-text-strong)] bg-[var(--sidebar-item-active-bg)]"
+      : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-strong)] hover:bg-[var(--sidebar-item-hover-bg)]",
+  );
+}
 
 export function AppSidebar() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -134,10 +143,31 @@ export function AppSidebar() {
   const navigate = useNavigate();
 
   const favPlaylist = useUserStore((s) => s.favPlaylist);
-  const favPlaylistUrl = `/detail/playlist?id=${favPlaylist?.id}`;
+  const isFavPlaylistActive = favPlaylist ? isPlaylistActive(favPlaylist) : false;
+  const favPlaylistUrl = favPlaylist
+    ? `/detail/playlist?id=${favPlaylist.id}`
+    : "";
 
-  const { setOpen } = useSidebar();
+  const { setOpen, isMobile } = useSidebar();
   const autoCollapseSidebar = useSettingStore((s) => s.system?.autoCollapseSidebar);
+  const setSidebarOpenRef = useRef(setOpen);
+
+  useEffect(() => {
+    setSidebarOpenRef.current = setOpen;
+  }, [setOpen]);
+
+  useEffect(() => {
+    if (isMobile) return;
+    setSidebarOpenRef.current(!autoCollapseSidebar);
+  }, [autoCollapseSidebar, isMobile]);
+
+  const handleAutoExpand = () => {
+    if (!isMobile && autoCollapseSidebar) setOpen(true);
+  };
+
+  const handleAutoCollapse = () => {
+    if (!isMobile && autoCollapseSidebar) setOpen(false);
+  };
 
   return (
     <>
@@ -145,17 +175,20 @@ export function AppSidebar() {
         variant="sidebar"
         collapsible="icon"
         className="absolute! h-full! transition-all duration-300"
-        onMouseEnter={() => {
-          if (autoCollapseSidebar) setOpen(true);
-        }}
-        onMouseLeave={() => {
-          if (autoCollapseSidebar) setOpen(false);
+        onMouseEnter={handleAutoExpand}
+        onMouseLeave={handleAutoCollapse}
+        onFocus={handleAutoExpand}
+        onBlur={(event) => {
+          const nextTarget = event.relatedTarget as Node | null;
+          if (!nextTarget || !event.currentTarget.contains(nextTarget)) {
+            handleAutoCollapse();
+          }
         }}
         onContextMenu={(e) => {
           e.preventDefault();
         }}
       >
-        <SidebarContent className="bg-transparent dark:bg-transparent">
+        <SidebarContent className="bg-transparent dark:bg-transparent text-[var(--sidebar-text)]">
           <SidebarGroup className="px-2">
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
@@ -167,15 +200,10 @@ export function AppSidebar() {
                       transition={{ duration: 0.15 }}
                       className="relative"
                     >
-                      <SidebarMenuButton 
-                        asChild 
+                      <SidebarMenuButton
+                        asChild
                         isActive={isItemActive(item)}
-                        className={cn(
-                          "relative overflow-hidden transition-all duration-200",
-                          isItemActive(item) 
-                            ? "font-semibold text-foreground bg-black/5 dark:bg-white/10" 
-                            : "text-foreground/70 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
-                        )}
+                        className={sidebarItemClass(isItemActive(item))}
                       >
                         <Link to={item.url}>
                           <AnimatePresence mode="wait">
@@ -187,7 +215,7 @@ export function AppSidebar() {
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 transition={{ duration: 0.15 }}
                               >
-                                <item.activeIcon className="size-5 text-primary" />
+                                <item.activeIcon className={sidebarActiveIconClass} />
                               </motion.div>
                             ) : (
                               <motion.div
@@ -207,7 +235,7 @@ export function AppSidebar() {
                           {isItemActive(item) && (
                             <motion.div
                               layoutId="activeNav"
-                              className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full"
+                              className={sidebarActiveRailClass}
                               transition={{ type: "spring", stiffness: 400, damping: 30 }}
                             />
                           )}
@@ -220,10 +248,10 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="mx-3! my-2! bg-black/5 dark:bg-white/10" />
+          <SidebarSeparator className={sidebarSeparatorClass} />
 
           <SidebarGroup className="px-2">
-            <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 mb-1 px-2">
+            <SidebarGroupLabel className={sidebarLabelClass}>
               资料库
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -236,15 +264,10 @@ export function AppSidebar() {
                       transition={{ duration: 0.15 }}
                       className="relative"
                     >
-                      <SidebarMenuButton 
-                        asChild 
+                      <SidebarMenuButton
+                        asChild
                         isActive={isItemActive(item)}
-                        className={cn(
-                          "relative overflow-hidden transition-all duration-200",
-                          isItemActive(item) 
-                            ? "font-semibold text-foreground bg-black/5 dark:bg-white/10" 
-                            : "text-foreground/70 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
-                        )}
+                        className={sidebarItemClass(isItemActive(item))}
                       >
                         <Link to={item.url}>
                           <AnimatePresence mode="wait">
@@ -256,7 +279,7 @@ export function AppSidebar() {
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 transition={{ duration: 0.15 }}
                               >
-                                <item.activeIcon className="size-5 text-primary" />
+                                <item.activeIcon className={sidebarActiveIconClass} />
                               </motion.div>
                             ) : (
                               <motion.div
@@ -276,7 +299,7 @@ export function AppSidebar() {
                           {isItemActive(item) && (
                             <motion.div
                               layoutId="activeNav"
-                              className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full"
+                              className={sidebarActiveRailClass}
                               transition={{ type: "spring", stiffness: 400, damping: 30 }}
                             />
                           )}
@@ -289,10 +312,10 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="mx-3! my-2! bg-black/5 dark:bg-white/10" />
+          <SidebarSeparator className={sidebarSeparatorClass} />
 
           <SidebarGroup className="px-2 flex-1 overflow-hidden">
-            <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 mb-1 px-2">
+            <SidebarGroupLabel className={sidebarLabelClass}>
               播放列表
             </SidebarGroupLabel>
             <SidebarGroupContent className="overflow-y-auto max-h-[calc(100vh-420px)] scrollbar-thin scrollbar-thumb-black/10 scrollbar-track-transparent hover:scrollbar-thumb-black/20 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20 transition-colors duration-300">
@@ -303,52 +326,55 @@ export function AppSidebar() {
                   transition={{ duration: 0.15 }}
                   className="relative"
                 >
-                  <SidebarMenuButton
-                    className={cn(
-                      "relative overflow-hidden transition-all duration-200",
-                      (favPlaylist && isPlaylistActive(favPlaylist))
-                        ? "font-semibold text-foreground bg-black/5 dark:bg-white/10" 
-                        : "text-foreground/70 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
-                    )}
-                    asChild
-                    isActive={(favPlaylist && isPlaylistActive(favPlaylist)) || false}
-                  >
-                    <Link to={favPlaylistUrl}>
-                      <AnimatePresence mode="wait">
-                        {pathName === "/detail/playlist" ||
-                        (pathName === "/detail/playlist/" &&
-                          currentId === favPlaylist?.id.toString()) ? (
+                  {favPlaylist ? (
+                    <SidebarMenuButton
+                      className={sidebarItemClass(isFavPlaylistActive)}
+                      asChild
+                      isActive={isFavPlaylistActive}
+                    >
+                      <Link to={favPlaylistUrl}>
+                        <AnimatePresence mode="wait">
+                          {isFavPlaylistActive ? (
+                            <motion.div
+                              key="active"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              transition={{ duration: 0.15 }}
+                            >
+                              <Heart20Filled className={sidebarActiveIconClass} />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="inactive"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              transition={{ duration: 0.15 }}
+                            >
+                              <Heart20Regular className="size-5" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        <span className="font-semibold">我喜欢的音乐</span>
+                        {isFavPlaylistActive && (
                           <motion.div
-                            key="active"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ duration: 0.15 }}
-                          >
-                            <Heart20Filled className="size-5 text-primary" />
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="inactive"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ duration: 0.15 }}
-                          >
-                            <Heart20Regular className="size-5" />
-                          </motion.div>
+                            layoutId="activeNavFav"
+                            className={sidebarActiveRailClass}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
                         )}
-                      </AnimatePresence>
+                      </Link>
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton
+                      disabled
+                      className={cn(sidebarItemClass(false), "opacity-50")}
+                    >
+                      <Heart20Regular className="size-5" />
                       <span className="font-semibold">我喜欢的音乐</span>
-                      {(favPlaylist && isPlaylistActive(favPlaylist)) && (
-                        <motion.div
-                          layoutId="activeNavFav"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
+                    </SidebarMenuButton>
+                  )}
                 </motion.div>
 
                 <Collapsible defaultOpen className="group/collapsible py-1">
@@ -359,7 +385,7 @@ export function AppSidebar() {
                         whileTap={{ scale: 0.98 }}
                         transition={{ duration: 0.15 }}
                       >
-                        <SidebarMenuButton className="text-foreground/70 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5">
+                        <SidebarMenuButton className={sidebarSubtleButtonClass}>
                           <List20Regular />
                           <span>歌单</span>
                           <ChevronRight24Regular className="size-4! ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -367,7 +393,7 @@ export function AppSidebar() {
                       </motion.div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <SidebarMenuSub className="gap-1 pl-2 mt-1 border-l border-black/5 dark:border-white/10">
+                      <SidebarMenuSub className="gap-1 pl-2 mt-1 border-l border-[var(--sidebar-divider)]">
                         <SidebarMenuItem>
                           <motion.div
                             whileHover={{ scale: 1.02 }}
@@ -375,11 +401,17 @@ export function AppSidebar() {
                             transition={{ duration: 0.15 }}
                           >
                             <SidebarMenuButton
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 text-foreground/60 hover:text-foreground"
-                              onClick={() => setIsPlaylistAddOpen(true)}
+                              className={cn("cursor-pointer", sidebarSubtleButtonClass)}
+                              onClick={() => {
+                                if (!user) {
+                                  setIsLoginOpen(true);
+                                  return;
+                                }
+                                setIsPlaylistAddOpen(true);
+                              }}
                             >
                               <div className="flex items-center gap-2">
-                                <div className="size-6 relative rounded-sm overflow-hidden shrink-0 flex items-center justify-center bg-black/5 dark:bg-white/10">
+                                <div className="size-6 relative rounded-sm overflow-hidden shrink-0 flex items-center justify-center bg-[var(--sidebar-item-hover-bg)]">
                                   <Add20Regular className="size-4!" />
                                 </div>
                                 <span className="text-sm">
@@ -401,12 +433,7 @@ export function AppSidebar() {
                               <SidebarMenuButton
                                 asChild
                                 isActive={isPlaylistActive(playlist)}
-                                className={cn(
-                                  "relative overflow-hidden transition-all duration-200",
-                                  isPlaylistActive(playlist)
-                                    ? "font-semibold text-foreground bg-black/5 dark:bg-white/10" 
-                                    : "text-foreground/70 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
-                                )}
+                                className={sidebarItemClass(isPlaylistActive(playlist))}
                               >
                                 <Link to={`/detail/playlist?id=${playlist.id}`}>
                                   <div className="flex items-center gap-2">
@@ -422,7 +449,7 @@ export function AppSidebar() {
                                   {isPlaylistActive(playlist) && (
                                     <motion.div
                                       layoutId="activeNavPlaylist"
-                                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full"
+                                      className={sidebarActiveRailClass}
                                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                                     />
                                   )}
@@ -442,12 +469,7 @@ export function AppSidebar() {
                               <SidebarMenuButton
                                 asChild
                                 isActive={isPlaylistActive(playlist)}
-                                className={cn(
-                                  "relative overflow-hidden transition-all duration-200",
-                                  isPlaylistActive(playlist)
-                                    ? "font-semibold text-foreground bg-black/5 dark:bg-white/10" 
-                                    : "text-foreground/70 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
-                                )}
+                                className={sidebarItemClass(isPlaylistActive(playlist))}
                               >
                                 <Link to={`/detail/playlist?id=${playlist.id}`}>
                                   <div className="flex items-center gap-2">
@@ -465,7 +487,7 @@ export function AppSidebar() {
                                   {isPlaylistActive(playlist) && (
                                     <motion.div
                                       layoutId="activeNavPlaylist"
-                                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full"
+                                      className={sidebarActiveRailClass}
                                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                                     />
                                   )}
@@ -483,7 +505,7 @@ export function AppSidebar() {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="bg-transparent dark:bg-transparent border-t border-black/5 dark:border-white/5">
+        <SidebarFooter className="bg-transparent dark:bg-transparent border-t border-[var(--sidebar-divider)]">
           <SidebarMenu className="gap-1 px-2 py-2">
             <SidebarMenuItem>
               <DropdownMenu>
@@ -493,8 +515,8 @@ export function AppSidebar() {
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <SidebarMenuButton className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 text-foreground/70 hover:text-foreground">
-                      <Avatar className="size-6 -ml-0.5 ring-2 ring-black/5 dark:ring-white/10">
+                    <SidebarMenuButton className={cn("cursor-pointer", sidebarSubtleButtonClass)}>
+                      <Avatar className="size-6 -ml-0.5 ring-2 ring-[var(--sidebar-divider)]">
                         <AvatarImage src={user?.avatarUrl} alt="1sen" />
                         <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
                           <Person20Regular />
@@ -504,11 +526,11 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </motion.div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" className="h-auto min-w-[180px] bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-xl rounded-xl">
+                <DropdownMenuContent side="top" className="h-auto min-w-[180px] shadow-xl rounded-xl">
                   {!user && (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => setIsLoginOpen(true)}
-                      className="hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                      className="cursor-pointer"
                     >
                       <LogIn className="size-4 mr-2" />
                       登录
@@ -517,22 +539,17 @@ export function AppSidebar() {
 
                   {!!user && (
                     <>
-                      <DropdownMenuItem className="hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-                        <Ribbon20Regular className="size-4 mr-2" />
-                        我的会员
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => navigate("/profile")}
-                        className="hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                        className="cursor-pointer"
                       >
                         <PersonEdit20Regular className="size-4 mr-2" />
                         个人信息
                       </DropdownMenuItem>
 
-                      <DropdownMenuSeparator className="bg-black/5 dark:bg-white/10" />
+                      <DropdownMenuSeparator className="bg-[var(--component-divider)]" />
 
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         variant="destructive"
                         onClick={() => setIsLogoutOpen(true)}
                         className="cursor-pointer"
@@ -553,15 +570,10 @@ export function AppSidebar() {
                 transition={{ duration: 0.15 }}
                 className="relative"
               >
-                <SidebarMenuButton 
-                  asChild 
+                <SidebarMenuButton
+                  asChild
                   isActive={pathName === "/setting"}
-                  className={cn(
-                    "relative overflow-hidden transition-all duration-200",
-                    pathName === "/setting"
-                      ? "font-semibold text-foreground bg-black/5 dark:bg-white/10" 
-                      : "text-foreground/70 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
-                  )}
+                  className={sidebarItemClass(pathName === "/setting")}
                 >
                   <Link to={"/setting"}>
                     <Settings20Regular />
@@ -569,7 +581,7 @@ export function AppSidebar() {
                     {pathName === "/setting" && (
                       <motion.div
                         layoutId="activeNavSettings"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full"
+                        className={sidebarActiveRailClass}
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
                     )}

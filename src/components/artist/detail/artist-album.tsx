@@ -64,7 +64,7 @@ export function ArtistAlbum({
       <div ref={loadMoreRef} className="flex justify-center py-4">
         {loading && <Loading />}
         {!hasMore && albums.length > 0 && (
-          <span className="text-black/60">没有更多了</span>
+          <span className="text-muted-foreground">没有更多了</span>
         )}
       </div>
     </div>

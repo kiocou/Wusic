@@ -20,6 +20,7 @@ import {
 import { Resource, Song } from "@/lib/types";
 import { QUALITY_LIST } from "@/lib/constants/song";
 import { useDownloadStore } from "@/lib/store/downloadStore";
+import { toast } from "sonner";
 
 export function SongActions({ type, data }: ActionProps) {
   const { closeMenu } = useContextMenuStore();
@@ -34,9 +35,6 @@ export function SongActions({ type, data }: ActionProps) {
   const { isInPlaylist } = usePlayerStore();
   const navigate = useNavigate();
   const playlistList = useUserStore((s) => s.playlistList);
-
-  if (type !== "song" && data.resourceType !== "song") return null;
-
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const playlistId = searchParams.get("id");
@@ -56,13 +54,38 @@ export function SongActions({ type, data }: ActionProps) {
   const startDownload = useDownloadStore((s) => s.startDownload);
   const downloadedSongs = useDownloadStore((s) => s.downloadedSongs);
 
+  const isSongAction = type === "song" || data?.resourceType === "song";
+  if (!isSongAction || !data) return null;
+
+  const song = data as Partial<Song>;
+  const resource = data as Partial<Resource>;
+  const resourceSong = resource.resourceExtInfo?.song;
+  const songId = Number(song.id ?? resource.resourceId ?? resourceSong?.id);
+  const artists = song.ar?.length
+    ? song.ar
+    : resource.resourceExtInfo?.artists?.length
+      ? resource.resourceExtInfo.artists
+      : resourceSong?.ar ?? [];
+  const primaryArtist = artists[0];
+  const album = song.al ?? resourceSong?.al;
+  const canDownload = type === "song" && Number.isFinite(songId);
+  const downloadableQualities = canDownload
+    ? QUALITY_LIST.filter(
+        (q) => q.key !== "unlock" && Boolean((data as Song)[q.key as keyof Song]),
+      )
+    : [];
+
   const isDownloaded = downloadedSongs.some(
-    (item) => item.song.id === (data as Song).id,
+    (item) => Number(item.song.id) === songId,
   );
+  const isCurrentSong = currentSong?.id === songId;
+  const isAlreadyInPlaylist = Number.isFinite(songId)
+    ? isInPlaylist({ id: songId } as Song)
+    : false;
 
   return (
     <>
-      {(!currentSong || currentSong?.id !== (data as Song).id) && (
+      {!isCurrentSong && (
         <ContextMenuButton
           id="play-music"
           icon={<Play24Filled className="size-4" />}
@@ -74,9 +97,7 @@ export function SongActions({ type, data }: ActionProps) {
         />
       )}
 
-      {!isInPlaylist({
-        id: (data as any).id || (data as any).resourceId,
-      } as Song) && (
+      {!isAlreadyInPlaylist && (
         <>
           <ContextMenuButton
             id="add-to-playlist"
@@ -97,30 +118,36 @@ export function SongActions({ type, data }: ActionProps) {
         content="收藏"
         hasSubmenu={true}
       >
-        {playlistList.map((playlist) => (
+        {playlistList.length > 0 ? (
+          playlistList.map((playlist) => (
+            <ContextMenuButton
+              id={`collect-music-${playlist.id}`}
+              key={playlist.id}
+              content={playlist.name}
+              onClick={() => {
+                closeMenu();
+                handleAddToPlaylist(playlist.id, data);
+              }}
+            />
+          ))
+        ) : (
           <ContextMenuButton
-            id={`collect-music-${playlist.id}`}
-            key={playlist.id}
-            content={playlist.name}
-            onClick={() => {
-              closeMenu();
-              handleAddToPlaylist(playlist.id, data);
-            }}
+            id="collect-music-empty"
+            content="暂无可收藏歌单"
+            disabled
           />
-        ))}
+        )}
       </ContextMenuButton>
 
-      {!isDownloaded && type === "song" && (
+      {!isDownloaded && canDownload && (
         <ContextMenuButton
           id="download-music"
           icon={<ArrowDownload24Regular className="size-4" />}
           content="下载"
           hasSubmenu={true}
         >
-          {QUALITY_LIST.filter(
-              (q) => q.key !== "unlock" && (data as Song)[q.key as keyof Song],
-            )
-            .map((q) => (
+          {downloadableQualities.length > 0 ? (
+            downloadableQualities.map((q) => (
               <ContextMenuButton
                 id={`download-music-${q.level}`}
                 key={q.level}
@@ -130,29 +157,38 @@ export function SongActions({ type, data }: ActionProps) {
                   startDownload(data as Song, q.level);
                 }}
               />
-            ))}
+            ))
+          ) : (
+            <ContextMenuButton
+              id="download-music-empty"
+              content="暂无可下载音质"
+              disabled
+            />
+          )}
         </ContextMenuButton>
       )}
 
       <ContextMenuButton
         id="artist-info"
         icon={<Person24Regular className="size-4" />}
-        content={`歌手：${(data as Song).ar?.[0]?.name || (data as Resource).resourceExtInfo.artists?.[0]?.name}`}
+        content={`歌手：${primaryArtist?.name ?? "未知歌手"}`}
+        disabled={!primaryArtist?.id}
         onClick={() => {
-          navigate(
-            `/detail/artist?id=${(data as Song).ar?.[0]?.id}|| (data as Resource).resourceExtInfo.artists?.[0]?.id}`,
-          );
+          if (!primaryArtist?.id) return;
+          navigate(`/detail/artist?id=${primaryArtist.id}`);
           closeMenu();
         }}
       />
 
-      {(data as Song).al && (
+      {album && (
         <ContextMenuButton
           id="album-info"
           icon={<Album24Regular className="size-4" />}
-          content={`专辑：${(data as Song).al?.name}`}
+          content={`专辑：${album.name ?? "未知专辑"}`}
+          disabled={!album.id}
           onClick={() => {
-            navigate(`/detail/album?id=${(data as Song).al?.id}`);
+            if (!album.id) return;
+            navigate(`/detail/album?id=${album.id}`);
             closeMenu();
           }}
         />
@@ -166,12 +202,11 @@ export function SongActions({ type, data }: ActionProps) {
           onClick={() => {
             closeMenu();
             if (isFavPlaylist) {
-              console.log("isLikelist");
               handleLike("song", data);
             } else {
-              console.log("isNotLikelist");
               handleRemoveFromPlaylist(Number(playlistId), data);
             }
+            toast.success("已提交移除操作", { position: "top-center" });
           }}
         />
       )}

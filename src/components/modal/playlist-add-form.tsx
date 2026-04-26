@@ -27,9 +27,14 @@ export function PlaylistAddForm({
 
   const leftNameLength = 40 - name.length;
 
-  const canCreate = name.length > 0 && leftNameLength >= 0;
+  const canCreate = !!user && name.length > 0 && leftNameLength >= 0;
 
   async function handleAddPlaylist() {
+    if (!user) {
+      toast.error("请先登录后再创建歌单", { position: "top-center" });
+      return;
+    }
+
     try {
       setCreating(true);
       const res = await createPlaylist(name, isPrivate);

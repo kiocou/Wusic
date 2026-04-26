@@ -1,7 +1,7 @@
 import { usePlayerStore } from "@/lib/store/playerStore";
 import { YeeSlider } from "../yee-slider";
 import { formatDuration } from "@/lib/utils";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Vibrant } from "node-vibrant/browser";
 import { useSettingStore } from "@/lib/store/settingStore";
 
@@ -13,34 +13,42 @@ export function PlayerBarSlider() {
   const progress = usePlayerStore((s) => s.progress);
   const seek = usePlayerStore((s) => s.seek);
   const currentTime = usePlayerStore((s) => s.currentTime);
+  const duration = usePlayerStore((s) => s.duration);
 
   const currentSong = usePlayerStore((s) => s.currentSong);
   const coverUrl = currentSong?.al?.picUrl || currentSong?.album?.picUrl;
   const [coverColor, setCoverColor] = useState("");
-  
-  // 使用 ref 追踪上一次的颜色提取，避免重复
-  const lastCoverUrlRef = useRef<string | null>(null);
 
   const theme = useSettingStore((s) => s.appearance.theme);
+  const effectiveTheme =
+    theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : theme;
 
   useEffect(() => {
-    if (!coverUrl) return;
-    
-    // 如果封面 URL 没变，跳过提取
-    if (coverUrl === lastCoverUrlRef.current) return;
-    lastCoverUrlRef.current = coverUrl;
+    let cancelled = false;
+
+    if (!coverUrl) {
+      setCoverColor("");
+      return;
+    }
+
+    const cacheKey = `${effectiveTheme}:${coverUrl}`;
 
     // 检查缓存
-    if (colorCache.has(coverUrl)) {
-      setCoverColor(colorCache.get(coverUrl)!);
+    if (colorCache.has(cacheKey)) {
+      setCoverColor(colorCache.get(cacheKey)!);
       return;
     }
 
     const v = new Vibrant(coverUrl);
     v.getPalette().then((palette) => {
+      if (cancelled) return;
       const vibrant =
-        theme === "dark" ? palette.Vibrant?.hex : palette.DarkVibrant?.hex;
-      const color = vibrant || "rgba(0, 0, 0, 0)";
+        effectiveTheme === "dark" ? palette.Vibrant?.hex : palette.DarkVibrant?.hex;
+      const color = vibrant || "var(--primary)";
       setCoverColor(color);
       
       // 添加到缓存，限制缓存大小
@@ -48,18 +56,23 @@ export function PlayerBarSlider() {
         const firstKey = colorCache.keys().next().value;
         if (firstKey) colorCache.delete(firstKey);
       }
-      colorCache.set(coverUrl, color);
+      colorCache.set(cacheKey, color);
     }).catch(() => {
-      setCoverColor("rgba(0, 0, 0, 0)");
+      if (cancelled) return;
+      setCoverColor("var(--primary)");
     });
-  }, [coverUrl]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [coverUrl, effectiveTheme]);
 
   return (
     <div
       className="absolute w-full top-0"
       style={
         {
-          "--dynamic-cover-color": coverColor || "black",
+          "--dynamic-cover-color": coverColor || "var(--primary)",
         } as React.CSSProperties
       }
     >
@@ -68,7 +81,13 @@ export function PlayerBarSlider() {
         onValueChange={seek}
         max={100}
         step={0.1}
-        tooltip={formatDuration(currentTime)}
+        disabled={duration <= 0}
+        tooltip={`${formatDuration(currentTime)} / ${formatDuration(duration)}`}
+        tooltipFormatter={(value) => {
+          const safeValue = Math.min(Math.max(value, 0), 100);
+          const previewTime = duration * (safeValue / 100);
+          return `${formatDuration(previewTime)} / ${formatDuration(duration)}`;
+        }}
         trackClassName="bg-foreground/10 rounded-none"
         rangeClassName="bg-[var(--dynamic-cover-color)] rounded-r-full rounded-l-none"
       />

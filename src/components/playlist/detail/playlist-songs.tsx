@@ -1,4 +1,5 @@
 import { SongList } from "@/components/song/song-list";
+import { StatePanel } from "@/components/ui/state-panel";
 import { Song } from "@/lib/types";
 import { CollectionsEmpty24Regular } from "@fluentui/react-icons";
 import { useMemo } from "react";
@@ -56,11 +57,19 @@ export function PlaylistSongs({
 
   return (
     <div className="w-full h-full">
-      {songs && <SongList songList={filteredAndSortedSongs} showAlbum={true} />}
-      {!songs.length && (
-        <div className="h-64 text-black/60 flex items-center justify-center gap-4">
-          <CollectionsEmpty24Regular /> 暂无歌曲
-        </div>
+      {filteredAndSortedSongs.length > 0 ? (
+        <SongList songList={filteredAndSortedSongs} showAlbum={true} />
+      ) : (
+        <StatePanel
+          compact
+          icon={<CollectionsEmpty24Regular className="size-6" />}
+          title={songs.length ? "没有匹配的歌曲" : "暂无歌曲"}
+          description={
+            songs.length
+              ? "换个关键词试试，或清空当前搜索。"
+              : "这个歌单还没有可播放内容。"
+          }
+        />
       )}
     </div>
   );

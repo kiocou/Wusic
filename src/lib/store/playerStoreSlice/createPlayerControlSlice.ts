@@ -1,4 +1,5 @@
 import { StateCreator } from "zustand";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { PlayerControlSlice, SharedPlayerState } from "@/lib/types/player";
 import {
   getSongLyric,
@@ -22,6 +23,14 @@ import { useSettingStore } from "../settingStore";
 import { resolveAudioUrl } from "@/lib/services/musicSources";
 
 let currentPlayAbortController: AbortController | null = null;
+
+function getSafeProgress(currentTime: number, duration: number) {
+  if (!Number.isFinite(currentTime) || !Number.isFinite(duration) || duration <= 0) {
+    return 0;
+  }
+
+  return Math.min(Math.max((currentTime / duration) * 100, 0), 100);
+}
 
 export const createPlayerControlSlice: StateCreator<
   SharedPlayerState,
@@ -64,6 +73,39 @@ export const createPlayerControlSlice: StateCreator<
       set({ currentSong: song, currentIndexInPlaylist: targetIndex });
 
       set({ isLoadingMusic: true, currentTime: 0, progress: 0 });
+
+      if (song.source === "local" && song.localPath) {
+        const localUrl = convertFileSrc(song.localPath);
+        set({ currentSongLyrics: null, currentMusicLevelKey: "l" });
+
+        corePlayer.play(localUrl, {
+          onEnd: () => {
+            get().next();
+          },
+          onPlay: (duration) => {
+            set({ isPlaying: true, duration });
+          },
+          onProgress: (currentTime) => {
+            const { duration } = get();
+            set({ currentTime, progress: getSafeProgress(currentTime, duration) });
+          },
+          onLoadError: (error) => {
+            console.error("本地音乐加载失败:", error);
+            set({ isPlaying: false, isLoadingMusic: false });
+          },
+          onPlayError: (error) => {
+            console.error("本地音乐播放失败:", error);
+            set({ isPlaying: false, isLoadingMusic: false });
+          },
+        });
+        corePlayer.setVolume(get().volume);
+
+        set({
+          isLoadingMusic: false,
+          currentSongMusicDetail: [],
+        });
+        return;
+      }
 
       // 先检查歌曲是否可用
       let url;
@@ -119,27 +161,38 @@ export const createPlayerControlSlice: StateCreator<
       const musicLyric = await getSongLyric(song.id, signal);
       set({ currentSongLyrics: musicLyric });
 
+      if (signal.aborted) return;
+
       if (url && musicDetail) {
-        corePlayer.play(
-          url,
-          () => {
+        corePlayer.play(url, {
+          onEnd: () => {
             get().next();
           },
-          (duration) => {
+          onPlay: (duration) => {
             set({ isPlaying: true, duration });
           },
-          (currentTime) => {
+          onProgress: (currentTime) => {
             const { duration } = get();
-            const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-            set({ currentTime, progress });
+            set({ currentTime, progress: getSafeProgress(currentTime, duration) });
           },
-        );
+          onLoadError: (error) => {
+            console.error("音乐加载失败:", error);
+            set({ isPlaying: false, isLoadingMusic: false });
+          },
+          onPlayError: (error) => {
+            console.error("音乐播放失败:", error);
+            set({ isPlaying: false, isLoadingMusic: false });
+          },
+        });
         corePlayer.setVolume(get().volume);
 
         set({
           isLoadingMusic: false,
           currentSongMusicDetail: musicDetail,
         });
+      } else {
+        console.warn("未找到可播放音源:", song.name || song.id);
+        set({ isPlaying: false, isLoadingMusic: false, currentSongMusicDetail: musicDetail || [] });
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") {
@@ -156,6 +209,20 @@ export const createPlayerControlSlice: StateCreator<
   },
 
   playQueue: async (songs: Song[]) => {
+    if (!songs.length) {
+      corePlayer.stop(true);
+      set({
+        isPlaying: false,
+        isLoadingMusic: false,
+        playlist: [],
+        currentIndexInPlaylist: 0,
+        currentTime: 0,
+        progress: 0,
+        duration: 0,
+      });
+      return;
+    }
+
     set({
       isLoadingMusic: true,
       playlist: songs,
@@ -226,10 +293,29 @@ export const createPlayerControlSlice: StateCreator<
       return;
     }
 
-    if (isPlaying) corePlayer.pause();
-    else corePlayer.resume();
+    if (isPlaying) {
+      corePlayer.pause();
+      set({ isPlaying: false });
+      return;
+    }
 
-    set({ isPlaying: !isPlaying });
+    const resumed = corePlayer.resume();
+    set({ isPlaying: resumed });
+  },
+
+  stop: () => {
+    if (currentPlayAbortController) {
+      currentPlayAbortController.abort();
+      currentPlayAbortController = null;
+    }
+
+    corePlayer.stop();
+    set({
+      isPlaying: false,
+      isLoadingMusic: false,
+      currentTime: 0,
+      progress: 0,
+    });
   },
 
   next: () => {
@@ -239,7 +325,6 @@ export const createPlayerControlSlice: StateCreator<
     }
 
     const {
-      togglePlay,
       currentIndexInPlaylist,
       playlist,
       currentSong,
@@ -272,7 +357,7 @@ export const createPlayerControlSlice: StateCreator<
         nextIdx = 0;
         if (repeatMode === "order") {
           set({ currentIndexInPlaylist: 0 });
-          togglePlay();
+          get().stop();
           return;
         }
       }
@@ -330,19 +415,25 @@ export const createPlayerControlSlice: StateCreator<
 
   updateProgress: () => {
     const currentTime = corePlayer.getPosition();
-    const { duration } = get();
-    const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+    const duration = get().duration || corePlayer.getDuration();
+    const progress = getSafeProgress(currentTime, duration);
     set({ currentTime, progress });
   },
 
   updateVolume: (volume: number) => {
-    corePlayer.setVolume(volume);
-    set({ volume });
+    const safeVolume = Math.min(Math.max(volume, 0), 1);
+    corePlayer.setVolume(safeVolume);
+    set({ volume: safeVolume });
   },
 
   seek: (percentage: number) => {
-    corePlayer.seek(percentage / 100);
-    get().updateProgress();
+    const safePercentage = Math.min(Math.max(percentage, 0), 100);
+    const currentTime = corePlayer.seek(safePercentage / 100);
+    const duration = get().duration || corePlayer.getDuration();
+    set({
+      currentTime,
+      progress: getSafeProgress(currentTime, duration),
+    });
   },
 
   toggleRepeatMode: () => {

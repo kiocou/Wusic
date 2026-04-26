@@ -75,15 +75,17 @@ function SongCover() {
   const currentSong = usePlayerStore((s) => s.currentSong);
 
   return (
-    <div className="w-full h-1/2 flex items-center justify-center translate-y-8">
-      <div className="w-64 h-64 relative rounded-lg shadow-xl overflow-hidden">
+    <div className="w-full flex-1 flex items-center justify-center py-4 min-h-0">
+      <div className="relative w-full max-w-[280px] aspect-square rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10 transform-gpu will-change-transform">
         <img
           src={GetThumbnail(
             currentSong?.al?.picUrl || currentSong?.album?.picUrl || "",
           )}
-          alt=""
-          className="w-64 h-64"
+          alt={currentSong?.name || "Album cover"}
+          className="w-full h-full object-cover"
+          draggable={false}
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
       </div>
     </div>
   );

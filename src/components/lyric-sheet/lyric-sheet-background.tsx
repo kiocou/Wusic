@@ -47,7 +47,7 @@ export function LyricSheetBackground() {
   }, [coverUrl]);
 
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 transform-gpu will-change-transform">
       <div className="w-full h-full relative">
         <MeshGradient
           colors={gradientColors}
@@ -56,17 +56,10 @@ export function LyricSheetBackground() {
           grainMixer={meshGradientProps.grainMixer}
           grainOverlay={meshGradientProps.grainOverlay}
           speed={isPlaying ? meshGradientProps.speed : 0}
-          className="w-full h-full"
+          className="w-full h-full transform-gpu"
         />
 
-        {/* <BackgroundRender
-          album={coverUrl}
-          playing={isPlaying}
-          renderer={MeshGradientRenderer}
-          fps={60}
-        /> */}
-
-        <div className="absolute top-0 left-0 w-full h-full bg-black/20"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/10 via-transparent to-black/30 pointer-events-none" />
       </div>
     </div>
   );

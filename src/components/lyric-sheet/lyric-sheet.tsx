@@ -1,15 +1,28 @@
 import { usePlayerStore } from "@/lib/store/playerStore";
-import { useState, lazy, Suspense, cloneElement, isValidElement, useEffect } from "react";
+import {
+  useState,
+  lazy,
+  Suspense,
+  cloneElement,
+  isValidElement,
+  useEffect,
+  type MouseEvent as ReactMouseEvent,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { LyricSheetTitlebar } from "./lyric-sheetr-titlebar";
-import { motion, AnimatePresence, type PanInfo } from "framer-motion";
-import { springShared } from "@/styles/animations";
+import { LyricSheetTitlebar } from "./lyric-sheet-titlebar";
+import { motion, type PanInfo } from "framer-motion";
 import { createPortal } from "react-dom";
 
 // 懒加载 PlayerPage - 它包含大量动画组件
 const PlayerPage = lazy(() => import("@/pages/PlayerPage"));
 
-export function LyricSheet({ children }: { children: React.ReactNode }) {
+type LyricSheetTriggerProps = {
+  onClick?: (event: ReactMouseEvent<HTMLElement>) => void;
+};
+
+export function LyricSheet({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -35,16 +48,18 @@ export function LyricSheet({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const handleOpen = (e: any) => {
+  const handleOpen = (e: ReactMouseEvent<HTMLElement>) => {
     setHasOpened(true);
     setIsOpen(true);
-    if (isValidElement(children) && children.props.onClick) {
-      children.props.onClick(e);
+    if (isValidElement<LyricSheetTriggerProps>(children)) {
+      children.props.onClick?.(e);
     }
   };
 
-  const trigger = isValidElement(children) ? (
-    cloneElement(children as any, { onClick: handleOpen })
+  const trigger = isValidElement<LyricSheetTriggerProps>(children) ? (
+    cloneElement(children as ReactElement<LyricSheetTriggerProps>, {
+      onClick: handleOpen,
+    })
   ) : (
     <div onClick={handleOpen}>{children}</div>
   );

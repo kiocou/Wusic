@@ -1,17 +1,73 @@
-import { Store } from "@tauri-apps/plugin-store";
+import type { Store } from "@tauri-apps/plugin-store";
 import { DownloadTask, DownloadedSong, Song } from "../types";
 import { create } from "zustand";
 import { toast } from "sonner";
-import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/core";
 import { downloadMusic } from "../services/song";
+import { isTauriRuntime } from "@/lib/tauri";
 
-let storeInstance: Store | null = null;
+type DownloadPersistenceStore = Pick<Store, "get" | "set" | "save">;
+
+let storeInstance: DownloadPersistenceStore | null = null;
+
+function createBrowserDownloadStore(): DownloadPersistenceStore {
+  const storageKey = "wusic-downloads";
+
+  const read = () => {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey) || "{}") as Record<
+        string,
+        unknown
+      >;
+    } catch {
+      return {};
+    }
+  };
+
+  return {
+    async get<T>(key: string) {
+      return read()[key] as T | undefined;
+    },
+    async set(key: string, value: unknown) {
+      const data = read();
+      data[key] = value;
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    },
+    async save() {
+      // localStorage writes synchronously in browser preview.
+    },
+  };
+}
+
 async function getDownloadStore() {
   if (!storeInstance) {
+    if (!isTauriRuntime()) {
+      storeInstance = createBrowserDownloadStore();
+      return storeInstance;
+    }
+
+    const { Store } = await import("@tauri-apps/plugin-store");
     storeInstance = await Store.load("downloads.json");
   }
   return storeInstance;
+}
+
+async function invokeTauri<T>(command: string, args?: Record<string, unknown>) {
+  if (!isTauriRuntime()) {
+    throw new Error("当前浏览器预览环境不支持此桌面端操作");
+  }
+
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<T>(command, args);
+}
+
+async function listenTauri<T>(
+  event: string,
+  handler: (event: { payload: T }) => void | Promise<void>,
+) {
+  if (!isTauriRuntime()) return () => {};
+
+  const { listen } = await import("@tauri-apps/api/event");
+  return listen<T>(event, handler);
 }
 
 function buildFileName(song: Song, level: string, fileType: string): string {
@@ -72,7 +128,7 @@ async function runDownload(
     unlistenPaused?.();
   };
 
-  unlistenProgress = await listen<{
+  unlistenProgress = await listenTauri<{
     song_id: number;
     downloaded: number;
     total: number;
@@ -95,7 +151,7 @@ async function runDownload(
     });
   });
 
-  unlistenComplete = await listen<{ song_id: number }>(
+  unlistenComplete = await listenTauri<{ song_id: number }>(
     "download-complete",
     async (e) => {
       if (e.payload.song_id !== song.id) return;
@@ -128,7 +184,7 @@ async function runDownload(
     },
   );
 
-  unlistenPaused = await listen<{ song_id: number; bytes_written: number }>(
+  unlistenPaused = await listenTauri<{ song_id: number; bytes_written: number }>(
     "download-paused",
     (e) => {
       if (e.payload.song_id !== song.id) return;
@@ -150,7 +206,7 @@ async function runDownload(
   );
 
   try {
-    await invoke("download_song", {
+    await invokeTauri("download_song", {
       url: data.url,
       savePath,
       songId: song.id,
@@ -178,7 +234,10 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     const dir = await store.get<string>("downloadDir");
     const songs = await store.get<DownloadedSong[]>("downloadedSongs");
     const defaultDir =
-      dir ?? (await invoke<string>("get_default_download_dir"));
+      dir ??
+      (isTauriRuntime()
+        ? await invokeTauri<string>("get_default_download_dir")
+        : "");
     set({ downloadDir: defaultDir, downloadedSongs: songs ?? [] });
   },
 
@@ -190,6 +249,11 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   },
 
   startDownload: async (song, level) => {
+    if (!isTauriRuntime()) {
+      toast.error("浏览器预览环境不支持下载，请在桌面端使用。");
+      return;
+    }
+
     const { downloadDir, activeTasks } = get();
 
     if (activeTasks.has(song.id)) {
@@ -234,7 +298,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
 
   pauseDownload: async (songId) => {
     try {
-      await invoke("pause_download", { songId });
+      await invokeTauri("pause_download", { songId });
     } catch (e) {
       toast.error(`暂停失败：${e}`);
     }

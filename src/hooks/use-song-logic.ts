@@ -101,7 +101,7 @@ export function useSongLogic() {
     if (!resourceId) return;
 
     try {
-      const res = addSongToPlaylist(pid, [resourceId]);
+      const res = await addSongToPlaylist(pid, [resourceId]);
 
       if (!res) {
         toast.error("添加失败，请重试...", { position: "top-center" });
@@ -124,7 +124,7 @@ export function useSongLogic() {
     if (!resourceId) return;
 
     try {
-      const res = removeSongFromPlaylist(pid, [resourceId]);
+      const res = await removeSongFromPlaylist(pid, [resourceId]);
 
       if (!res) {
         toast.error("移除失败，请重试...", { position: "top-center" });

@@ -45,7 +45,6 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   blurIntensity = 0.02,
 }) => {
   const buttonRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
 
   // 鼠标位置 (相对于按钮中心)
@@ -75,12 +74,10 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   // 背景模糊闪烁 (通过 CSS 变量控制)
   const handleMouseEnter = useCallback(() => {
     if (disabled) return;
-    setIsHovered(true);
   }, [disabled]);
 
   const handleMouseLeave = useCallback(() => {
     if (disabled) return;
-    setIsHovered(false);
     mouseX.set(0);
     mouseY.set(0);
   }, [disabled, mouseX, mouseY]);

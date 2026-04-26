@@ -115,11 +115,12 @@ export function DynamicMeshBackground() {
 
       <motion.div
         aria-hidden="true"
-        animate={{
-          scale: isPlaying ? [1, 1.08, 1] : 1,
-          opacity: isPlaying ? [0.56, 0.78, 0.56] : 0.5,
-        }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        animate={
+          isPlaying
+            ? { scale: [1, 1.06, 1], opacity: [0.56, 0.72, 0.56] }
+            : { scale: 1, opacity: 0.5 }
+        }
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.24),transparent_28%),radial-gradient(circle_at_84%_72%,rgba(255,255,255,0.16),transparent_34%),linear-gradient(120deg,rgba(0,0,0,0.08),rgba(0,0,0,0.78)_72%)] transform-gpu will-change-transform"
       />
       <div className="absolute inset-0 bg-black/18" />
